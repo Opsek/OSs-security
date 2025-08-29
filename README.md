@@ -20,4 +20,4 @@ Always be cautious with the software you install and the commands you execute.
 
 ## Contributing  
 
-Pull requests and improvements are welcome! Please test scripts responsibly before suggesting changes.  
+Pull requests and improvements are welcome!
