@@ -1,8 +1,9 @@
 # Device hardening & factory reset guides
 
-This repository provides **hardening scripts** and **factory reset guides** to help you secure your devices or react quickly if you suspect anything.    
+This repository provides **hardening scripts** and **factory reset guides** to help you secure your devices or react quickly if you suspect your device being compromised.    
 
 ⚠️ **Note:** These resources improve security but **cannot prevent you from running malicious code** on your device.  
+
 Always be cautious with the software you install and the commands you execute.
 
 ---
