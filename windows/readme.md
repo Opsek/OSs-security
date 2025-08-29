@@ -50,7 +50,7 @@ Some hardening steps require **manual user action** and are not included in auto
 ## 🚀 Usage
 
 ### Option 1 – Download and run manually
-1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1?raw=1)  
+1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1)  
 2. Right-click the downloaded file → **Run with PowerShell** (as Administrator).
 
 ---
@@ -59,5 +59,5 @@ Some hardening steps require **manual user action** and are not included in auto
 Open **PowerShell as Administrator** and paste this one-liner:
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; irm [https://raw.githubusercontent.com/USERNAME/REPO/main/windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1) | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; irm [ttps://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1) | iex
 
