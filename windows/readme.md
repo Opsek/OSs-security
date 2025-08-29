@@ -1,7 +1,7 @@
 # 🛡️ Windows hardening script
 
 A PowerShell script to apply essential Windows 11 hardening measures.  
-Must be run as **Administrator** for full effect.
+Must run as **Administrator** for full effect.
 
 ---
 
@@ -50,7 +50,7 @@ Some hardening steps require **manual user action** and are not included in auto
 ## 🚀 Usage
 
 ### Option 1 – Download and run manually
-1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1)  
+1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1?raw=1)  
 2. Right-click the downloaded file → **Run with PowerShell** (as Administrator).
 
 ---
