@@ -1,6 +1,6 @@
 # 🛡️ Windows hardening script
 
-A PowerShell script to apply essential Windows 11 hardening measures.  
+A PowerShell script to apply essential Windows hardening measures.  
 Must run as **Administrator** for full effect.
 
 ---
@@ -12,6 +12,31 @@ Some hardening steps require **manual user action** and are not included in auto
 - Setting up **Dynamic Lock** with your phone
 - Installing optional features (e.g. **Windows Sandbox**) if not already installed
 - Some **Group Policies** that have no `reg.exe` equivalent (possible with `LGPO.exe`)
+
+---
+
+## 🚀 Usage
+
+### Option 1 – Run directly from PowerShell
+Open **PowerShell as Administrator** and paste this one-liner:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force ; irm 'https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1' | iex
+```
+
+![](assets/windows_howto.gif)
+
+
+### Option 2 – Run from CMD
+Open **Command Prompt as Administrator** and paste this one-liner:
+
+```cmd
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm 'https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1' | iex"
+```
+
+### Option 3 – Download and run manually
+1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1)  
+2. Right-click the downloaded file → **Run with PowerShell** (as Administrator).
 
 ---
 
@@ -44,20 +69,3 @@ Some hardening steps require **manual user action** and are not included in auto
 | `reg add ... DenyRemovableDevices=1` | Block USB removable device installation | Prevents USB malware / BadUSB |
 | `Set-DnsClientServerAddress ... 8.8.8.8` | Set secure DNS (Google) | Protects from DNS hijacking/malicious resolvers |
 | `Set-MpPreference -EnableControlledFolderAccess Enabled` | Enable Controlled Folder Access | Blocks ransomware from encrypting user data |
-
----
-
-## 🚀 Usage
-
-### Option 1 – Download and run manually
-1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1)  
-2. Right-click the downloaded file → **Run with PowerShell** (as Administrator).
-
----
-
-### Option 2 – Run directly from PowerShell
-Open **PowerShell as Administrator** and paste this one-liner:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; irm [ttps://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1) | iex
-
