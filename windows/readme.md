@@ -21,7 +21,7 @@ Some hardening steps require **manual user action** and are not included in auto
 Open **PowerShell as Administrator** and paste this one-liner:
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force ; irm 'https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1' | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force ; irm 'https://raw.githubusercontent.com/Opsek/OSs-security/refs/heads/main/windows/hardening-windows.ps1' | iex
 ```
 
 ![](assets/windows_howto.gif)
@@ -31,7 +31,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force ; irm 'https:/
 Open **Command Prompt as Administrator** and paste this one-liner:
 
 ```cmd
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm 'https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1' | iex"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm 'https://raw.githubusercontent.com/Opsek/OSs-security/refs/heads/main/windows/hardening-windows.ps1' | iex"
 ```
 
 ### Option 3 – Download and run manually
