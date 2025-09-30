@@ -74,6 +74,7 @@ sudo ./main.sh --profile recommended -v
 │       ├── logging.sh   # System logging
 │       └── updates.sh   # System updates
 └── LICENSE
+```
 
 ## Module Features
 
