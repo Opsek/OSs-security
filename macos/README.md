@@ -1,4 +1,4 @@
-# macOS Security Hardening Script
+# macOS Hardening Script
 
 ## Introduction
 
