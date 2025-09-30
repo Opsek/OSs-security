@@ -126,29 +126,16 @@ sudo ./main.sh --profile recommended -v
 
 ## Warnings
 
-**Important: Read Before Use**
+⚠️ **Important considerations before use:**
 
-1. **Testing Environment**
-   - Always test in a pre-production environment first
-   - Create system backups before applying hardening
-   - Document your current configuration
+1. **Backup**: Always backup your system before running the hardening script
+2. **Testing**: Use the `--dry-run` option first to preview changes
+3. **System Impact**: Some security measures may affect system functionality or user experience
+4. **Root Access**: The script requires root privileges to apply system-level changes
+5. **Recovery**: Some changes may be difficult to reverse - review the settings carefully
+6. **Compatibility**: Certain applications may not work properly under strict security profiles
 
-2. **Service Impact**
-   - Hardening may break existing services
-   - Use `--module` to apply changes gradually
-   - The paranoid profile may require additional configuration
-   - Some changes require system restart
-
-3. **Access Considerations**
-   - SSH configuration changes may affect remote access
-   - Firewall rules might block necessary services
-   - Password policies may affect user access
-   - Some changes are not easily reversible
-
-4. **Platform Specific**
-   - Not all measures apply to all distributions
-   - Some features require specific package versions
-   - Custom configurations may conflict with hardening
+For any issues or questions, please open an issue on the project repository.
 
 For emergency recovery:
 - Backups are stored in `/var/backups/linux-harden/`
