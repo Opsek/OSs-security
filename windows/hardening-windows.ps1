@@ -67,15 +67,35 @@ Invoke-Safe "→ Enabling Memory Integrity..." {
                      -Name "Enabled" -PropertyType DWord -Value 1 -Force | Out-Null
 }
 
-Invoke-Safe "→ Checking for BitLocker support and enabling if possible..." {
+Invoke-Safe "→ Checking for BitLocker / Device Encryption support..." {
     $edition = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").EditionID
+    
     if ($edition -eq "Core") {
-        Write-Log "BitLocker is not supported on Home edition."
-    } elseif (-not (Get-Command Get-BitLockerVolume -ErrorAction SilentlyContinue)) {
+        Write-Log "(Warning) BitLocker is NOT available on Windows Home editions."
+        
+        # Device Encryption check
+	# Bitlocker is not avaiable on Windows 11 Home Edition
+        try {
+            $deStatus = Get-CimInstance -Namespace root\cimv2\security\microsoftvolumeencryption `
+                                        -ClassName Win32_EncryptableVolume `
+                                        -ErrorAction Stop
+            if ($deStatus) {
+                Write-Log "This system may support 'Device Encryption' instead of BitLocker."
+                Write-Log "   You can enable it in Settings → Update & Security → Device Encryption."
+		Write-Log "   More details : https://support.microsoft.com/en-us/windows/device-encryption-in-windows-cf7e2b6f-3e70-4882-9532-18633605b7df"
+            }
+        } catch {
+            Write-Log "No encryption feature detected on this edition."
+        }
+    }
+    elseif (-not (Get-Command Get-BitLockerVolume -ErrorAction SilentlyContinue)) {
         Write-Log "BitLocker PowerShell module not found."
-    } else {
-        $systemDrive = (Get-WmiObject -Query "SELECT DeviceID FROM Win32_OperatingSystem").DeviceID.Replace(":", "")
+    }
+    else {
+        # Retrieving system drive
+        $systemDrive = (Get-CimInstance Win32_OperatingSystem).SystemDrive.TrimEnd(":")
         $bitLockerStatus = Get-BitLockerVolume -MountPoint "$systemDrive`:"
+        
         if ($bitLockerStatus.ProtectionStatus -eq 'Off') {
             Write-Log "→ Enabling BitLocker on $systemDrive`:..."
             Enable-BitLocker -MountPoint "$systemDrive`:" -EncryptionMethod XtsAes256 -UsedSpaceOnly -TpmProtector -Confirm:$false
