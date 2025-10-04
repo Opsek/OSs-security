@@ -7,7 +7,7 @@
 # CIS 2.4.1 - Disable Remote Apple Events
 disable_remote_apple_events() {
     info "CIS 2.4.1 - Disabling Remote Apple Events"
-    
+    info "You can skip this step if the system is already secured by default (Remote Apple Events no longer exists on newer Mac models)."
     execute "systemsetup -setremoteappleevents off"
     
     success "Remote Apple Events disabled"
@@ -43,15 +43,6 @@ disable_printer_sharing() {
     success "Printer Sharing disabled"
 }
 
-# CIS 2.4.5 - Disable Remote Login (SSH)
-disable_ssh() {
-    info "CIS 2.4.5 - Disabling SSH Remote Login"
-    
-    execute "systemsetup -setremotelogin off"
-    execute "launchctl unload -w /System/Library/LaunchDaemons/ssh.plist 2>/dev/null || true"
-    
-    success "SSH Remote Login disabled"
-}
 
 # CIS 2.4.6 - Disable File Sharing
 disable_file_sharing() {
