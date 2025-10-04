@@ -29,15 +29,17 @@ TODO GIF INSTALL
 The script supports different security profiles to match your security requirements:
 
 ```bash
-```bash
-# Run with recommended profile (suitable for most users)
-sudo ./main.sh --profile recommended
+# Run with default recommended profile (suitable for most users)
+sudo ./main.sh
 
 # Run in test mode (dry-run)
-sudo ./main.sh --profile recommended --dry-run
+sudo ./main.sh --dry-run
 
 # Run with compliance checks
-sudo ./main.sh --profile recommended --checks
+sudo ./main.sh --checks
+
+# Run the paranoid profile (maximum restrictions)
+sudo ./main.sh --paranoid
 ```
 
 Available profiles:

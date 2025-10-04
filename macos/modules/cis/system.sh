@@ -42,6 +42,7 @@ configure_screensaver() {
     success "Screen saver timeout configured to 20 minutes"
 }
 
+
 # CIS 2.6.1 - Enable FileVault
 enable_filevault() {
     info "CIS 2.6.1 - Checking FileVault status"
@@ -50,30 +51,21 @@ enable_filevault() {
         success "FileVault is already enabled"
     else
         warn "FileVault is not enabled"
-        if [[ "$FORCE_YES" == true ]]; then
-            info "FileVault must be enabled manually via System Preferences > Security & Privacy"
-        else
-            read -p "Enable FileVault now? This will require a reboot. (y/N): " -n 1 -r
-            echo
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                execute "fdesetup enable"
-            else
-                warn "FileVault not enabled - manual configuration required"
-            fi
-        fi
+        warn "FileVault must be enabled manually via System Preferences > Security & Privacy"
+        warn "Refer to https://support.apple.com/en-us/HT204837 for instructions"
     fi
 }
 
 # CIS 2.7.1 - Turn on Firewall
 enable_firewall() {
     info "CIS 2.7.1 - Enabling Application Firewall"
-    
+    info "You can skip this step if the system is already secured by default (socketfilterfw no longer exists on newer Mac models)."
+
     execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on"
     execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on"
     execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setallowsigned off"
     execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setallowsignedapp off"
     execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setloggingmode on"
-    
     success "Application Firewall enabled and configured"
 }
 

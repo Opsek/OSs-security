@@ -135,18 +135,46 @@ validate_profile() {
         moderate) profile_functions="$PROFILE_MODERATE" ;;
         strict) profile_functions="$PROFILE_STRICT" ;;
         paranoid) profile_functions="$PROFILE_PARANOID" ;;
+        recommended) profile_functions="$PROFILE_RECOMMENDED" ;;
         *) error "Unknown profile: $profile"; return 1 ;;
     esac
-    
-    # Check that all functions exist
-    for func in $profile_functions; do
+
+    # Normalize profile function list into an array (split on newlines, trim whitespace)
+    local -a profile_array=()
+    mapfile -t profile_array <<<"$profile_functions"
+
+    # helper to trim whitespace
+    _trim() {
+        local var="$1"
+        # remove leading whitespace
+        var="${var#${var%%[![:space:]]*}}"
+        # remove trailing whitespace
+        var="${var%${var##*[![:space:]]}}"
+        printf '%s' "$var"
+    }
+
+    # Check which functions exist (treat missing ones as warnings)
+    local missing_count=0
+    local missing_list=""
+    for rawfunc in "${profile_array[@]}"; do
+        func="$(_trim "$rawfunc")"
+        # skip empty lines
+        [[ -z "$func" ]] && continue
+
         if ! function_exists "$func"; then
-            error "Function not found: $func"
-            return 1
+            warn "Function not found: $func"
+            missing_count=$((missing_count + 1))
+            missing_list="$missing_list $func"
         fi
     done
-    
-    success "Profile validation passed: $profile"
+
+    if [[ $missing_count -gt 0 ]]; then
+        warn "Profile validation completed with $missing_count missing function(s):$missing_list"
+    else
+        success "Profile validation passed: $profile"
+    fi
+
+    # Return success to allow partial application of profiles (missing functions will be skipped)
     return 0
 }
 
@@ -163,11 +191,16 @@ apply_profile() {
         moderate) profile_functions="$PROFILE_MODERATE" ;;
         strict) profile_functions="$PROFILE_STRICT" ;;
         paranoid) profile_functions="$PROFILE_PARANOID" ;;
+        recommended) profile_functions="$PROFILE_RECOMMENDED" ;;
         *) error "Unknown profile: $profile"; return 1 ;;
     esac
     
-    # Execute each function
-    for func in $profile_functions; do
+    # Execute each function from normalized array
+    mapfile -t profile_array <<<"$profile_functions"
+    for rawfunc in "${profile_array[@]}"; do
+        func="$(_trim "$rawfunc")"
+        [[ -z "$func" ]] && continue
+
         if function_exists "$func"; then
             info "Executing: $func"
             if "$func"; then
@@ -176,7 +209,7 @@ apply_profile() {
                 warn "✗ $func failed"
             fi
         else
-            error "Function not found: $func"
+            warn "Function not found: $func - skipping"
         fi
     done
     
@@ -219,5 +252,12 @@ init_environment() {
     # Load profiles
     if [[ -f "$script_dir/../config/profiles.conf" ]]; then
         source "$script_dir/../config/profiles.conf"
+        # Backwards compatibility and safety:
+        # Some configs use PROFILE_RECOMMENDED; map it to the 'moderate' profile
+        # if specific PROFILE_MODERATE is not defined. Use parameter expansion
+        # to avoid unbound variable errors when 'set -u' is enabled.
+        : "${PROFILE_MODERATE:=${PROFILE_RECOMMENDED:-}}"
+        : "${PROFILE_BASIC:=${PROFILE_MODERATE:-}}"
+        : "${PROFILE_STRICT:=${PROFILE_PARANOID:-}}"
     fi
 }
