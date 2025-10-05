@@ -24,4 +24,4 @@ show_bluetooth_status() {
     success "Bluetooth status added to menu bar"
 }
 
-// Service-related CIS functions are implemented in modules/cis/services.sh to avoid duplication.
+# Service-related CIS functions are implemented in modules/cis/services.sh to avoid duplication.

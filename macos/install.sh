@@ -127,8 +127,8 @@ show_post_install_info() {
     info "Next steps:"
     echo "1. Review the configuration files in config/"
     echo "2. Test the installation: ./tests/validation.sh"
-    echo "3. Run a dry-run test: sudo ./main.sh --profile moderate --dry-run"
-    echo "4. Apply hardening: sudo ./main.sh --profile moderate"
+        echo "3. Run a dry-run test: sudo ./main.sh --dry-run"
+        echo "4. Apply hardening: sudo ./main.sh"
     echo
     info "Documentation:"
     echo "- README.md: General information"
@@ -142,9 +142,9 @@ show_post_install_info() {
 main() {
     echo "╔══════════════════════════════════════════════════════════════════════════════╗"
     echo "║                                                                              ║"
-    echo "║                    macOS Security Hardening Script                          ║"
-    echo "║                         OPSEK Integration                                  ║"
-    echo "║                              Installation                                  ║"
+    echo "║                       macOS Security Hardening Script                        ║"
+    echo "║                              OPSEK Integration                               ║"
+    echo "║                                Installation                                  ║"
     echo "║                                                                              ║"
     echo "╚══════════════════════════════════════════════════════════════════════════════╝"
     echo
