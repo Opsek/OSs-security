@@ -79,9 +79,9 @@ show_banner() {
     echo
     echo "╔══════════════════════════════════════════════════════════════════════════════╗"
     echo "║                                                                              ║"
-    echo "║                    macOS Security Hardening Script                          ║"
-    echo "║                         OPSEK Integration                                 ║"
-    echo "║                              v${SCRIPT_VERSION:-0.1.0}                                      ║"
+    echo "║                       macOS Security Hardening Script                        ║"
+    echo "║                             OPSEK Integration                                ║"
+    echo "                                 v${SCRIPT_VERSION:-0.1.0}                       "
     echo "║                                                                              ║"
     echo "╚══════════════════════════════════════════════════════════════════════════════╝"
     echo
@@ -95,7 +95,7 @@ macOS Security Hardening Script v${SCRIPT_VERSION:-0.1.0}
 Usage: sudo $0 [OPTIONS]
 
 OPTIONS:
-    --profile PROFILE    Choose hardening profile: basic|moderate|strict|paranoid (default: moderate)
+    --paranoid           Enable the 'paranoid' profile (default: recommended)
     --lockdown          Enable Lockdown Mode compatible settings (macOS 13+ only)
     --checks            Run compliance checks after hardening
     --dry-run           Show changes that would be made without applying them
@@ -105,16 +105,18 @@ OPTIONS:
 
 PROFILES:
     basic      - Essential security with minimal impact
-    moderate   - Balanced security for most environments (recommended)
+    moderate   - Balanced security for most environments
+    recommended- Balanced default profile used when no profile flag is provided
+    paranoid   - Maximum restrictions; may break some services
     strict     - High security for sensitive environments
     paranoid   - Maximum restrictions; may break some services
 
 EXAMPLES:
-    sudo $0 --profile moderate --verbose
-    sudo $0 --dry-run --profile strict
-    sudo $0 --yes --profile paranoid --lockdown
-    sudo $0 --profile basic --lockdown
-    sudo $0 --profile moderate --checks
+    sudo $0 --verbose
+    sudo $0 --dry-run
+    sudo $0 --yes --paranoid --lockdown
+    sudo $0 --lockdown
+    sudo $0 --checks
 
 NOTES:
     - Lockdown Mode requires macOS 13 (Ventura) or later

@@ -27,7 +27,7 @@ readonly SCRIPT_VERSION="0.1.0"
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Configuration
-PROFILE="moderate"
+PROFILE="recommended"
 DRY_RUN=false
 FORCE_YES=false
 VERBOSE=false
@@ -118,7 +118,7 @@ run_opsek_checks() {
 
 while [[ ${#} -gt 0 ]]; do
     case "$1" in
-        --profile) PROFILE="$2"; shift 2 ;;
+    --paranoid) PROFILE="paranoid"; shift ;;
         --lockdown) ENABLE_LOCKDOWN=true; shift ;;
         --checks) ENABLE_CHECKS=true; shift ;;
         --dry-run) DRY_RUN=true; shift ;;
@@ -130,9 +130,9 @@ while [[ ${#} -gt 0 ]]; do
     esac
 done
 
-# Validate profile  
+# Validate profile
 case "$PROFILE" in
-    basic|moderate|strict|paranoid) ;;
+    basic|moderate|strict|paranoid|recommended) ;;
     *) error "Unknown profile: $PROFILE"; show_help; exit 1 ;;
 esac
 

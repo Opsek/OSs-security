@@ -126,10 +126,6 @@ Invoke-Safe "→ Enabling LSA Protection (RunAsPPL)..." {
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v RunAsPPL /t REG_DWORD /d 1 /f
 }
 
-Invoke-Safe "→ Hiding last logged-on user at logon screen..." {
-    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v DontDisplayLastUserName /t REG_DWORD /d 1 /f
-}
-
 Invoke-Safe "→ Disabling Remote Desktop..." {
     Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 1
 }
