@@ -141,7 +141,9 @@ validate_profile() {
 
     # Normalize profile function list into an array (split on newlines, trim whitespace)
     local -a profile_array=()
-    mapfile -t profile_array <<<"$profile_functions"
+    while IFS= read -r line; do
+        profile_array+=("$line")
+    done <<< "$profile_functions"
 
     # helper to trim whitespace
     _trim() {
