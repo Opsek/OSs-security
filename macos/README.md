@@ -1,7 +1,7 @@
 # macOS Hardening Script
  
 ## Introduction
-
+ 
 This project provides a comprehensive security hardening solution for macOS systems, integrating both CIS (Center for Internet Security) benchmarks and OPSEK-specific security measures. It is designed to enhance the security posture of macOS machines through automated configuration and hardening processes.
 
 ## Installation
