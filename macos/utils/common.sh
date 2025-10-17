@@ -198,7 +198,10 @@ apply_profile() {
     esac
     
     # Execute each function from normalized array
-    mapfile -t profile_array <<<"$profile_functions"
+    while IFS= read -r line; do
+        profile_array+=("$line")
+    done <<< "$profile_functions"
+    
     for rawfunc in "${profile_array[@]}"; do
         func="$(_trim "$rawfunc")"
         [[ -z "$func" ]] && continue
