@@ -16,7 +16,6 @@ update_system() {
     execute "defaults write /Library/Preferences/com.apple.SoftwareUpdate ConfigDataInstall -bool true"
     execute "defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool true"
     
-    success "Automatic updates configured"
 }
 
 # CIS 2.2.2 - Ensure time set is within appropriate limits
@@ -26,7 +25,6 @@ configure_time_sync() {
     execute "systemsetup -setusingnetworktime on"
     execute "systemsetup -setnetworktimeserver time.apple.com"
     
-    success "Network time synchronization configured"
 }
 
 # CIS 2.3.1 - Set an inactivity interval of 20 minutes or less for the screen saver
@@ -39,7 +37,6 @@ configure_screensaver() {
     execute "defaults write com.apple.screensaver askForPasswordDelay -int 0"
     execute "defaults write com.apple.screensaver idleTime -int 1200"
     
-    success "Screen saver timeout configured to 20 minutes"
 }
 
 
@@ -66,7 +63,6 @@ enable_firewall() {
     execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setallowsigned off"
     execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setallowsignedapp off"
     execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setloggingmode on"
-    success "Application Firewall enabled and configured"
 }
 
 # CIS 2.8 - Enable Gatekeeper
@@ -75,7 +71,6 @@ enable_gatekeeper() {
     
     execute "spctl --master-enable"
     
-    success "Gatekeeper enabled"
 }
 
 # CIS 2.9 - Enable Security Auditing
@@ -91,7 +86,6 @@ enable_security_auditing() {
         execute "sed -i '' 's/^flags:.*/flags:lo,aa/' /etc/security/audit_control"
     fi
     
-    success "Security auditing enabled"
 }
 
 # CIS 2.10 - Configure Security Auditing Flags
@@ -120,7 +114,6 @@ EOF
     execute "cp /tmp/audit_control /etc/security/audit_control"
     execute "rm /tmp/audit_control"
     
-    success "Audit flags configured"
 }
 
 # CIS 3.1 - Enable security auditing
@@ -129,7 +122,6 @@ enable_audit_logs() {
     
     execute "launchctl load -w /System/Library/LaunchDaemons/com.apple.auditd.plist 2>/dev/null || true"
     
-    success "Audit logs enabled"
 }
 
 # CIS 3.2 - Configure Security Auditing Flags
@@ -141,7 +133,6 @@ configure_security_auditing() {
     # Set appropriate audit flags
     execute "sed -i '' 's/^flags:.*/flags:lo,aa,ad,fd,fm,-all/' /etc/security/audit_control"
     
-    success "Security auditing flags configured"
 }
 
 # CIS 3.3 - Ensure security auditing retention
@@ -152,7 +143,6 @@ configure_audit_retention() {
     
     execute "sed -i '' 's/^expire-after:.*/expire-after:60d OR 10G/' /etc/security/audit_control"
     
-    success "Audit log retention configured"
 }
 
 # CIS 5.10 - Ensure system is set to hibernate
@@ -163,7 +153,6 @@ configure_hibernate_mode() {
     execute "pmset -a standbydelay 7200"
     execute "pmset -a hibernatemode 25"
     
-    success "Hibernate mode configured"
 }
 
 # CIS 5.18 - System Integrity Protection status

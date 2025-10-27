@@ -5,7 +5,7 @@ This repository provides **hardening scripts** and **factory reset guides** to h
 ⚠️ **Note:** These resources improve security but **cannot prevent you from running malicious code** on your device.  
 
 Always be cautious with the software you install and the commands you execute.
-
+ 
 ---
 
 ## Contents  

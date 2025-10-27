@@ -10,8 +10,6 @@ disable_bluetooth_discoverable() {
     
     execute "defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerState -int 0"
     execute "launchctl unload /System/Library/LaunchDaemons/com.apple.blued.plist 2>/dev/null || true"
-    
-    success "Bluetooth discoverable mode disabled"
 }
 
 # CIS 2.1.3 - Show Bluetooth status in menu bar
@@ -21,7 +19,6 @@ show_bluetooth_status() {
     execute "defaults write ~/Library/Preferences/com.apple.systemuiserver 'NSStatusItem Visible com.apple.menu.bluetooth' -bool true"
     execute "defaults write ~/Library/Preferences/com.apple.systemuiserver menuExtras -array-add '/System/Library/CoreServices/Menu Extras/Bluetooth.menu'"
     
-    success "Bluetooth status added to menu bar"
 }
 
 # Service-related CIS functions are implemented in modules/cis/services.sh to avoid duplication.

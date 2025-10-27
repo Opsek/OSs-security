@@ -14,7 +14,6 @@ disable_bluetooth_completely() {
     execute "defaults write com.apple.Bluetooth PrefKeyServicesEnabled -bool false"
     execute "defaults write ~/Library/Preferences/ByHost/com.apple.Bluetooth PowerEnabled -bool false"
     
-    success "Bluetooth completely disabled"
 }
 
 # Enhanced OPSEK function to disable all Bluetooth services
@@ -36,6 +35,5 @@ disable_all_bluetooth_services() {
     # Disable Bluetooth kernel extension
     execute "kextunload /System/Library/Extensions/IOBluetoothFamily.kext 2>/dev/null || true"
     
-    success "All Bluetooth services disabled"
 }
 
