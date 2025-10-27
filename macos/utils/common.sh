@@ -59,6 +59,7 @@ execute() {
     fi
     
     if eval "$cmd" 2>&1 | tee -a "$LOGFILE" > /dev/null; then
+        success "Command succeeded : $cmd"
         return 0
     else
         warn "Command failed: $cmd"

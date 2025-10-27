@@ -34,7 +34,6 @@ secure_keyboard_settings() {
     # Secure keyboard access for assistive devices
     execute "defaults write com.apple.universalaccess keyboardNavigation -bool true"
     
-    success "Secure keyboard settings configured"
 }
 
 # Harden kernel parameters
@@ -48,7 +47,6 @@ harden_kernel() {
     execute "pmset -a hibernatemode 25"
     execute "pmset -a destroyfvkeyonstandby 1"
     
-    success "Kernel hardening applied"
 }
 
 # Configure logging enhancements
@@ -61,6 +59,5 @@ enhance_logging() {
     # Configure log retention
     execute "sed -i '' 's/^expire-after:.*/expire-after:90d/' /etc/security/audit_control"
     
-    success "System logging enhanced"
 }
 
