@@ -57,8 +57,6 @@ The project follows a modular structure for better organization and maintainabil
   - `internals/`: OPSEK-specific security modules
 - `utils/`: Utility scripts for common functions
 - `checks/`: Compliance and verification scripts
-- `tests/`: Testing and validation scripts
-
 ```
 macos-hardening/
 ├── README.md
@@ -86,9 +84,6 @@ macos-hardening/
 ├── checks/
 │   ├── cis_checks.sh         # CIS compliance checks
 │   └── opsek_checks.sh       # OPSEK compliance checks
-└── tests/
-    ├── compliance.sh         # Compliance tests
-    └── validation.sh         # Configuration validation
 ```
 
 
