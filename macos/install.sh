@@ -76,7 +76,6 @@ setup_permissions() {
     find modules/ -name "*.sh" -exec chmod +x {} \;
     find utils/ -name "*.sh" -exec chmod +x {} \;
     find checks/ -name "*.sh" -exec chmod +x {} \;
-    find tests/ -name "*.sh" -exec chmod +x {} \;
     
     success "File permissions configured"
 }
@@ -100,24 +99,6 @@ create_directories() {
     done
 }
 
-# Test installation
-test_installation() {
-    info "Testing installation..."
-    
-    # Validation test
-    if ./tests/validation.sh; then
-        success "Validation tests passed"
-    else
-        warn "Validation tests failed"
-    fi
-    
-    # Compliance test
-    if ./tests/compliance.sh; then
-        success "Compliance tests passed"
-    else
-        warn "Compliance tests failed"
-    fi
-}
 
 # Display post-installation information
 show_post_install_info() {
@@ -126,13 +107,11 @@ show_post_install_info() {
     echo
     info "Next steps:"
     echo "1. Review the configuration files in config/"
-    echo "2. Test the installation: ./tests/validation.sh"
-        echo "3. Run a dry-run test: sudo ./main.sh --dry-run"
-        echo "4. Apply hardening: sudo ./main.sh"
+    echo "2. Run a dry-run test: sudo ./main.sh --dry-run"
+    echo "3. Apply hardening: sudo ./main.sh"
     echo
     info "Documentation:"
     echo "- README.md: General information"
-    echo "- INSTALL.md: Installation guide"
     echo "- CONTRIBUTING.md: Contribution guide"
     echo
     warn "IMPORTANT: Always test with --dry-run before applying changes!"
@@ -153,7 +132,6 @@ main() {
     install_dependencies
     setup_permissions
     create_directories
-    test_installation
     show_post_install_info
 }
 
