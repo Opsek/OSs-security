@@ -13,7 +13,6 @@ disable_siri_dictation() {
     execute "defaults write com.apple.Siri UserHasDeclinedEnable -bool true"
     execute "defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMMasterDictationEnabled -bool false"
     
-    success "Siri and dictation disabled"
 }
 
 # Disable diagnostic and usage data
@@ -23,7 +22,6 @@ disable_diagnostics() {
     execute "defaults write /Library/Application\\ Support/CrashReporter/DiagnosticMessagesHistory.plist AutoSubmit -bool false"
     execute "defaults write /Library/Application\\ Support/CrashReporter/DiagnosticMessagesHistory.plist SeedAutoSubmit -bool false"
     
-    success "Diagnostic and usage data disabled"
 }
 
 # Disable location services
@@ -32,7 +30,6 @@ disable_location_services() {
     
     execute "defaults write /var/db/locationd/Library/Preferences/ByHost/com.apple.locationd LocationServicesEnabled -bool false"
     
-    success "Location services disabled"
 }
 
 # Disable Spotlight suggestions
@@ -63,7 +60,6 @@ disable_spotlight_suggestions() {
         '{ enabled = 0; name = MENU_WEBSEARCH; }' \
         '{ enabled = 0; name = MENU_SPOTLIGHT_SUGGESTIONS; }'"
     
-    success "Spotlight suggestions disabled"
 }
 
 # Configure IPv6 settings
@@ -77,7 +73,6 @@ disable_ipv6_on_interfaces() {
         fi
     done <<< "$interfaces"
     
-    success "IPv6 disabled on network interfaces"
 }
 
 # Secure Safari settings
@@ -92,7 +87,6 @@ secure_safari() {
     execute "defaults write com.apple.Safari SendDoNotTrackHTTPHeader -bool true"
     execute "defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true"
     
-    success "Safari security settings configured"
 }
 
 # Disable unnecessary daemons
@@ -110,7 +104,6 @@ disable_unnecessary_daemons() {
         execute "launchctl unload -w /System/Library/LaunchDaemons/$daemon.plist 2>/dev/null || true"
     done
     
-    success "Unnecessary daemons disabled"
 }
 
 # Configure system-wide privacy settings
@@ -128,5 +121,4 @@ configure_privacy_settings() {
     execute "defaults write ~/Library/Preferences/ByHost/com.apple.coreservices.useractivityd ActivityAdvertisingAllowed -bool no"
     execute "defaults write ~/Library/Preferences/ByHost/com.apple.coreservices.useractivityd ActivityReceivingAllowed -bool no"
     
-    success "Privacy settings configured"
 }
