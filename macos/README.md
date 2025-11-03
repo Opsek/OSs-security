@@ -32,12 +32,11 @@ chmod +x main.sh
 
 3. Review the configuration in `config/settings.conf` and adjust if needed.
 
-
-TODO GIF INSTALL
-
 ---
 
 ## 🚀 Usage
+
+![Demo](macos_todo.gif)
 
 The script supports different security profiles to match your security requirements:
 
