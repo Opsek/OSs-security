@@ -4,6 +4,19 @@ This project provides a comprehensive security hardening solution for macOS syst
 
 ---
 
+## ⚠️ Warnings
+
+**Important considerations before use:**
+
+1. **Backup**: Always backup your system before running the hardening script
+2. **Testing**: Use the `--dry-run` option first to preview changes
+3. **System Impact**: Some security measures may affect system functionality or user experience
+4. **Root Access**: The script requires root privileges to apply system-level changes
+5. **Recovery**: Some changes may be difficult to reverse - review the settings carefully
+6. **Compatibility**: Certain applications may not work properly under strict security profiles
+
+---
+
 ## Installation
 
 1. Clone the repository:
@@ -139,16 +152,5 @@ macos-hardening/
 ```
 
 ---
-
-## ⚠️ Warnings
-
-**Important considerations before use:**
-
-1. **Backup**: Always backup your system before running the hardening script
-2. **Testing**: Use the `--dry-run` option first to preview changes
-3. **System Impact**: Some security measures may affect system functionality or user experience
-4. **Root Access**: The script requires root privileges to apply system-level changes
-5. **Recovery**: Some changes may be difficult to reverse - review the settings carefully
-6. **Compatibility**: Certain applications may not work properly under strict security profiles
 
 For any issues or questions, please open an issue on the project repository.
