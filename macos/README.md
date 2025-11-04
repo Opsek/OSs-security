@@ -36,7 +36,7 @@ chmod +x main.sh
 
 ## 🚀 Usage
 
-![Demo](macos_video.gif)
+![Demo](mac_gif.mp4)
 
 The script supports different security profiles to match your security requirements:
 
