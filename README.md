@@ -13,7 +13,7 @@ Always be cautious with the software you install and the commands you execute.
 | OS       | Hardening script                   | Factory reset guide                          |
 |----------|------------------------------------|----------------------------------------------|
 | Linux    | [Work in progress](./hardening-linux.md)   | [Factory Reset Guide](./linux/factory-reset-linux.md)   |
-| macOS    | [Work in progress](./hardening-macos.md)   | [Factory Reset Guide](./macos/factory-reset-macos.md)   |
+| macOS    | [Hardening Script](./macos/)   | [Factory Reset Guide](./macos/factory-reset-macos.md)   |
 | Windows  | [Hardening Script](./windows/hardening-windows.ps1) | [Factory Reset Guide](./windows/factory-reset-windows.md) |
 
 ---
