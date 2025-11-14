@@ -1,143 +1,148 @@
-# Linux Hardening Tool
+# 🛡️ Linux Hardening Script
 
-A comprehensive Linux hardening tool designed to enhance system security across multiple distributions (Debian/Ubuntu/CentOS/RHEL/Alma/Rocky/Fedora). This tool implements security best practices through modular, idempotent Bash scripts.
 
-## Installation
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/linux-hardening.git
-cd linux-hardening
-```
 
-2. Make the main script executable:
-```bash
-chmod +x main.sh
-```
 
-TODO GIF INSTALL
+A comprehensive Bash script to enhance system security across multiple Linux distributions (Debian/Ubuntu/CentOS/RHEL/Alma/Rocky/Fedora).
 
-## Usage
 
-Execute the script as root or via sudo:
+Must run as **root** for full effect.
 
-```bash
-sudo ./main.sh [options]
-```
 
-Available options:
-- `--profile <profile>`: Select security profile (recommended, paranoid)
-- `--dry-run`: Show actions without applying them
-- `-v, --verbose`: Show detailed execution information
-- `-y, --yes`: Skip confirmation prompts
-- `-h, --help`: Display help information
 
-Examples:
-```bash
-# Run with recommended profile
-sudo ./main.sh --profile recommended
+---
 
-# Dry run with paranoid profile
-sudo ./main.sh --profile paranoid --dry-run
 
-# Run in verbose mode
-sudo ./main.sh --profile recommended -v
-```
 
-## Project Structure
+## ⚠️ What cannot be fully automated
 
-```
-.
-├── main.sh            # Main script
-├── modules/           # Modular security components
-│   ├── access/        # Access control modules
-│   │   ├── banners.sh   # Security banners
-│   │   ├── ssh.sh       # SSH hardening
-│   │   ├── sudo.sh      # Sudo configuration
-│   │   └── users.sh     # User/group security
-│   ├── core/          # Core functionality
-│   │   ├── common.sh    # Shared functions
-│   │   └── summary.sh   # Execution summary
-│   ├── filesystem/    # Filesystem security
-│   │   ├── filesystem.sh  # Filesystem hardening
-│   │   └── permissions.sh # File permissions
-│   ├── network/       # Network security
-│   │   ├── fail2ban.sh   # Intrusion prevention
-│   │   ├── firewall.sh   # Firewall rules
-│   │   └── network.sh    # Network hardening
-│   ├── services/      # Service hardening
-│   │   ├── cron.sh      # Cron security
-│   │   └── services.sh   # Service configuration
-│   └── system/        # System hardening
-│       ├── info.sh      # System information
-│       ├── kernel.sh    # Kernel hardening
-│       ├── logging.sh   # System logging
-│       └── updates.sh   # System updates
-└── LICENSE
-```
+Some hardening steps require **manual user action** and are not included in automation:
 
-## Module Features
 
-### Access Control (`access/`)
-- `banners.sh`: Security banners for login screens
-- `ssh.sh`: SSH daemon hardening (ports, auth methods, ciphers)
-- `sudo.sh`: Secure sudo configuration
-- `users.sh`: User account security and password policies
+- Setting up **Full Disk Encryption** during OS installation
 
-### Core (`core/`)
-- `common.sh`: Shared functions, platform detection, logging
-- `summary.sh`: Execution reporting and status
 
-### Filesystem (`filesystem/`)
-- `filesystem.sh`: Mount options, tmp dirs, sticky bits
-- `permissions.sh`: Critical file permissions, umask settings
+- Configuring **BIOS/UEFI passwords** and security settings
 
-### Network (`network/`)
-- `fail2ban.sh`: Intrusion prevention (paranoid profile only)
-- `firewall.sh`: UFW/firewalld rules and policies
-- `network.sh`: TCP/IP stack hardening, IPv6 settings
 
-### Services (`services/`)
-- `cron.sh`: Cron/at access control
-- `services.sh`: Service hardening and unnecessary service removal
+- Implementing physical server security measures
 
-### System (`system/`)
-- `info.sh`: System information gathering
-- `kernel.sh`: Kernel parameter hardening
-- `logging.sh`: System logging configuration
-- `updates.sh`: System updates and package security
 
-## Security Profiles
+- Regularly reviewing system and application logs for anomalies
 
-### Recommended Profile
-- Standard secure configuration
-- Balanced security vs usability
-- Suitable for most production systems
 
-### Paranoid Profile
-- Maximum security settings
-- Additional security measures:
-  - Stricter firewall rules
-  - Fail2ban enabled
-  - More restrictive SSH settings
-  - Additional filesystem restrictions
-  - Enhanced auditing
-  - Stricter process limits
+- Application-specific hardening (e.g., web server, database configurations)
 
-## Warnings
 
-⚠️ **Important considerations before use:**
 
-1. **Backup**: Always backup your system before running the hardening script
-2. **Testing**: Use the `--dry-run` option first to preview changes
-3. **System Impact**: Some security measures may affect system functionality or user experience
-4. **Root Access**: The script requires root privileges to apply system-level changes
-5. **Recovery**: Some changes may be difficult to reverse - review the settings carefully
-6. **Compatibility**: Certain applications may not work properly under strict security profiles
+---
 
-For any issues or questions, please open an issue on the project repository.
 
-For emergency recovery:
-- Backups are stored in `/var/backups/linux-harden/`
-- Use `--dry-run` to preview changes
-- Consider maintaining an emergency access procedure
+
+## 🚀 Usage
+
+
+### Download and run manually
+
+1.  Clone the repository:
+
+
+    ```bash
+    git clone https://github.com/yourusername/linux-hardening.git
+    cd linux-hardening
+    ```
+
+
+2.  Make the main script executable:
+
+
+    ```bash
+    chmod +x main.sh
+    ```
+
+
+3.  Execute the script as root:
+
+
+    ```bash
+    sudo ./main.sh --profile recommended
+    ```
+
+
+![](assets/linux_howto.gif)
+
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 🔧 Automated Hardening Commands (Recommended Profile)
+
+
+
+
+
+| Module | What we are doing | What it protects from |
+|---|---|---|
+| `updates.sh` | Ensure system is fully updated | Exploitation of known vulnerabilities |
+| `kernel.sh` | Harden kernel parameters (`sysctl`) | Various network and memory-based attacks |
+| `ssh.sh` | Secure SSH configuration | Brute-force attacks and unauthorized access |
+| `firewall.sh` | Enable and configure `ufw`/`firewalld` | Unauthorized inbound/outbound network traffic |
+| `users.sh` | Enforce strong password policies | Weak or compromised user credentials |
+| `sudo.sh` | Secure `sudo` configuration | Privilege escalation via `sudo` misconfigurations |
+| `filesystem.sh` | Harden filesystem mount options | Execution of unauthorized code from temp dirs |
+| `permissions.sh` | Set secure permissions on critical files | Unauthorized file modification or access |
+| `logging.sh` | Configure system-wide auditing | Helps in detecting and investigating breaches |
+| `banners.sh` | Set legal/warning login banners | Discourages unauthorized access attempts |
+| `network.sh` | Harden TCP/IP stack | Network-level attacks like IP spoofing, SYN floods |
+| `services.sh` | Disable unnecessary services | Reducing the system's attack surface |
+| `cron.sh` | Restrict `cron` and `at` usage | Unauthorized scheduled task execution |
+
+
+---
+
+
+## 🧩 Optional Modules (Paranoid Profile)
+
+
+
+| Module | What we are doing | What it protects from |
+|---|---|---|
+| `fail2ban.sh` | Install and configure Fail2ban | Automated brute-force attacks on services (SSH, etc.) |
+| *Stricter Rules* | Apply more restrictive SSH, firewall, and process limits | Advanced threats and determined attackers |
+| *Enhanced Auditing* | Configure more verbose system auditing | Provides deeper insight for forensic analysis |
+
+
+
+
+---
+## ⚠️ Important Considerations
+
+1.  **Backup**: Always **backup your system** before running the hardening script. Backups are stored in `/var/backups/linux-harden/`.
+2.  **Testing**: Use the `--dry-run` option first to preview changes without applying them.
+
+
+    ```bash
+    sudo ./main.sh --profile recommended --dry-run
+    ```
+
+
+3.  **System Impact**: Some security measures, especially in the `paranoid` profile, may affect system functionality or application compatibility.
+4.  **Root Access**: The script requires root privileges to apply system-level changes.
+
+
+5.  **Recovery**: Review settings carefully. Some changes may be difficult to reverse without restoring from a backup.
