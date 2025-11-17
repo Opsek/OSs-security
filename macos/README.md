@@ -1,4 +1,4 @@
-# macOS Hardening Script
+# 🛡️ macOS Hardening Script
 
 This project provides a comprehensive security hardening solution for macOS systems, integrating both CIS (Center for Internet Security) benchmarks and OPSEK-specific security measures. It is designed to enhance the security posture of macOS machines through automated configuration and hardening processes. 
 
@@ -6,7 +6,7 @@ This project provides a comprehensive security hardening solution for macOS syst
 
 ---
 
-## Important Warnings
+## ⚠️ Important Warnings
 
 Before running the script:
 
@@ -31,7 +31,7 @@ Review `config/settings.conf` before execution to adjust default policy settings
 
 ---
 
-## Usage
+## 🚀 Usage
 
 ![Demo](assets/macos_howto.gif)
 
@@ -64,9 +64,9 @@ sudo ./main.sh --lockdown
 
 ---
 
-## Hardening Capabilities
+## 🔧 Hardening Capabilities
 
-### System Security
+### 🖥️ System Security
 
 | Command                    | What we do                         | What it protects                               |
 | -------------------------- | ---------------------------------- | ---------------------------------------------- |
@@ -79,7 +79,7 @@ sudo ./main.sh --lockdown
 
 ---
 
-### Network Security
+### 🌐 Network Security
 
 | Command                       | What we do                           | What it protects                   |
 | ----------------------------- | ------------------------------------ | ---------------------------------- |
@@ -92,7 +92,7 @@ sudo ./main.sh --lockdown
 
 ---
 
-### Access Control
+### 🔐 Access Control
 
 | Command                      | What we do                       | What it protects                          |
 | ---------------------------- | -------------------------------- | ----------------------------------------- |
@@ -106,7 +106,7 @@ sudo ./main.sh --lockdown
 
 ---
 
-### Privacy & Data Protection
+### 🧭 Privacy & Data Protection
 
 > ⚠️ **FileVault must be enabled manually** (System Settings → Privacy & Security → FileVault)
 
@@ -120,7 +120,7 @@ sudo ./main.sh --lockdown
 
 ---
 
-### Lockdown Mode Protection (macOS 13+)
+### 🧩 Lockdown Mode Protection (macOS 13+)
 
 Specialized configuration for environments facing highly targeted attacks.
 
