@@ -70,21 +70,30 @@ execute() {
 # Backup file before modification
 backup_file() {
     local file="$1"
-    
+
     if [[ ! -f "$file" ]]; then
         debug "File does not exist, skipping backup: $file"
         return 0
     fi
-    
+
     if [[ "$DRY_RUN" == true ]]; then
         debug "[DRY-RUN] Would backup: $file"
         return 0
     fi
-    
+
     local backup_path="$CURRENT_BACKUP$(dirname "$file")"
+    local backup_file="$backup_path/$(basename "$file")"
+
     execute "mkdir -p '$backup_path'"
-    execute "cp -p '$file' '$backup_path/'"
-    debug "Backed up: $file"
+
+    # 🔐 Preserve original backup if it already exists
+    if [[ -f "$backup_file" ]]; then
+        debug "Backup already exists, preserving original: $backup_file"
+        return 0
+    fi
+
+    execute "cp -p '$file' '$backup_file'"
+    debug "Backed up: $file -> $backup_file"
 }
 
 # Deprecated: use cleanup_old_backups_in_dir from utils/backup.sh for custom roots

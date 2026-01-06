@@ -1,24 +1,46 @@
 #!/usr/bin/env bash
 
+
+# detect_active_services: detect running SSH and web services along with their listening ports
+# returns a list of services in the format "name:port"
 detect_active_services() {
     local services=()
-    
+
     # Check for SSH
     if is_ssh_installed && systemctl is-active sshd.service >/dev/null 2>&1; then
         local ssh_port
         ssh_port=$(get_profile_setting "SSH_PORT")
         services+=("ssh:$ssh_port")
     fi
-    
+
     # Check for HTTP/HTTPS (Apache or Nginx)
-    if systemctl is-active apache2.service >/dev/null 2>&1 || \
-       systemctl is-active httpd.service >/dev/null 2>&1 || \
-       systemctl is-active nginx.service >/dev/null 2>&1; then
-        services+=("web")
-    fi
+    local web_services=("apache2" "httpd" "nginx")
+    for svc in "${web_services[@]}"; do
+        if systemctl is-active "$svc" >/dev/null 2>&1; then
+            # Detect actual listening TCP ports for this service
+            local ports=($(ss -tlnp | grep -E "$svc" | awk '{gsub(/.*:/,"",$4); print $4}' | sort -u))
+            
+            if [[ ${#ports[@]} -eq 0 ]]; then
+                log_warn "$svc is active but no listening TCP ports detected — skipping"
+                continue
+            fi
+
+            # Ask user for explicit consent for each port
+            for p in "${ports[@]}"; do
+                read -r -p "Allow incoming TCP traffic on port $p for $svc? [y/N]: " consent
+                if [[ "$consent" =~ ^[Yy]$ ]]; then
+                    services+=("$svc:$p")
+                    log_info "User approved $svc on port $p"
+                else
+                    log_info "User declined $svc on port $p"
+                fi
+            done
+        fi
+    done
 
     echo "${services[*]}"
 }
+
 
 configure_ufw_firewall() {
     log_info "Setting up UFW for network security"
@@ -67,17 +89,33 @@ configure_ufw_firewall() {
         esac
     done
     
+    local ssh_port
+    ssh_port=$(get_profile_setting "SSH_PORT")
+
     # Apply paranoid mode restrictions if enabled
     if [[ "${HARDEN_PROFILE:-}" == "paranoid" ]]; then
         log_info "Applying paranoid mode restrictions"
-        # Rate limit incoming connections
-        ufw limit 22/tcp comment 'Rate limit SSH'
-        # Log all blocked traffic
+        log_info "$ssh_port"
+
+        # Deny default SSH completely
+        ufw deny 22/tcp comment 'Block default SSH'
+
+        # Allow and rate-limit only on the hardened port
+        ufw allow "$ssh_port/tcp" comment 'Allow hardened SSH port'
+        ufw limit "$ssh_port/tcp" comment 'Rate limit hardened SSH'
+
         ufw logging high
     else
         ufw logging low
     fi
+
+    # Ensure SSH daemon matches the firewall
+    backup_file /etc/ssh/sshd_config
     
+    if ! grep -q "^Port $ssh_port" /etc/ssh/sshd_config; then
+        sed -i "s/^#\?Port .*/Port $ssh_port/" /etc/ssh/sshd_config
+    fi
+
     log_info "Enabling UFW firewall"
     ufw --force enable
     
@@ -90,6 +128,13 @@ configure_ufw_firewall() {
     log_info "UFW configuration completed successfully"
 }
 
+ssh_service_active() {
+    systemctl list-unit-files | grep -qE '^sshd\.service' &&
+    systemctl is-enabled sshd &>/dev/null &&
+    systemctl is-active sshd &>/dev/null
+}
+
+
 configure_firewalld() {
     log_info "Setting up FirewallD for network protection"
     pkg_install firewalld || true
@@ -100,26 +145,30 @@ configure_firewalld() {
     # Get SSH port from profile
     local ssh_port
     ssh_port=$(get_profile_setting "SSH_PORT")
-    
+
     if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
-        log_info "[dry-run] Configuring FirewallD with SSH on port $ssh_port"
+        log_info "[dry-run] Would configure FirewallD with SSH on port $ssh_port"
         return
     fi
-    
+
     log_info "Setting default zone to public"
     firewall-cmd --set-default-zone=public || true
-    
-    log_info "Configuring SSH access"
-    if [[ "$ssh_port" != "22" ]]; then
-        log_info "Adding custom SSH port $ssh_port"
-        firewall-cmd --permanent --add-port="$ssh_port/tcp" || true
+
+    if ssh_service_active; then
+        log_info "Verified SSH service is active"
+
+        if [[ "$ssh_port" != "22" ]]; then
+            log_info "Allowing SSH on hardened port $ssh_port"
+            firewall-cmd --permanent --add-port="$ssh_port/tcp" || true
+        else
+            log_info "Allowing standard SSH service"
+            firewall-cmd --permanent --add-service=ssh || true
+        fi
     else
-        log_info "Adding standard SSH service"
-        firewall-cmd --permanent --add-service=ssh || true
+        log_warn "SSH service not active — not opening inbound SSH ports"
     fi
-    
-    log_info "Reloading FirewallD configuration"
-    firewall-cmd --reload || true
+
+    firewall-cmd --reload || log_warn "Firewall reload failed"
     
     log_info "FirewallD configuration completed"
 }
