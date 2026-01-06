@@ -3,13 +3,25 @@
 remove_deny_files() {
     log_info "Removing legacy cron and at deny files"
     log_info "Switching to allowlist-based access control for scheduled tasks"
+
     for f in /etc/cron.deny /etc/at.deny; do
         if [[ -f "$f" ]]; then
+
+            log_info "Reviewing contents of $f"
+            sed 's/^/    /' "$f" | while read -r line; do
+                log_info "$line"
+            done
+
+            # Backup before deletion
+            backup_file "$f"
+
             if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
                 log_info "[dry-run] remove $f"
             else
                 rm -f "$f" || true
+                log_info "Removed $f"
             fi
+
         fi
     done
 }
