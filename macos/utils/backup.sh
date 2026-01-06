@@ -28,12 +28,15 @@ echo "Starting rollback from $BACKUP_DIR"
 # Restore plist files
 find "$BACKUP_DIR" -name "*.plist" | while read -r plist; do
     filename=$(basename "$plist")
+
     if [[ "$filename" == "com.apple."* ]]; then
         target_dir="/Library/Preferences"
     else
-        target_dir="~/Library/Preferences"
+        target_dir="$HOME/Library/Preferences"
     fi
-    
+
+    mkdir -p "$target_dir"
+
     echo "Restoring $filename to $target_dir"
     cp "$plist" "$target_dir/" 2>/dev/null || echo "Failed to restore $filename"
 done
@@ -45,8 +48,15 @@ if [[ -f "$BACKUP_DIR/etc/security/audit_control" ]]; then
 fi
 
 if [[ -f "$BACKUP_DIR/etc/sudoers" ]]; then
-    echo "Restoring sudoers"
-    cp "$BACKUP_DIR/etc/sudoers" "/etc/sudoers" 2>/dev/null || true
+    echo "Validating sudoers file before restore"
+
+    if visudo -c -f "$BACKUP_DIR/etc/sudoers"; then
+        echo "Sudoers file valid — restoring"
+        cp "$BACKUP_DIR/etc/sudoers" "/etc/sudoers"
+        chmod 0440 /etc/sudoers
+    else
+        echo "ERROR: Backup sudoers file is invalid — restore aborted"
+    fi
 fi
 
 # Remove timeout sudoers file if it exists

@@ -46,21 +46,40 @@ check_prereqs() {
 # Install dependencies
 install_dependencies() {
     info "Installing dependencies..."
-    
-    # Check if Homebrew is installed
-    if ! command -v brew &> /dev/null; then
-        info "Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    fi
-    
-    # Install necessary tools
+
+    # Dependencies required by the hardening scripts
     local packages=("bash" "git")
+
+    # Check whether brew is actually required
+    local brew_required=false
     for package in "${packages[@]}"; do
-        if ! brew list "$package" &> /dev/null; then
-            info "Installing $package..."
+        if ! command -v "$package" &>/dev/null; then
+            brew_required=true
+            break
+        fi
+    done
+
+    if [[ "$brew_required" == false ]]; then
+        success "All required dependencies already available"
+        return 0
+    fi
+
+    # If brew is required but not installed, fail safely
+    if ! command -v brew &>/dev/null; then
+        error "Homebrew is not installed but is required for missing dependencies"
+        error "For security reasons this script will NOT auto-install Homebrew"
+        error "Please install Homebrew manually from: https://brew.sh"
+        error "Then re-run this hardening script"
+        exit 1
+    fi
+
+    # Install only what is missing
+    for package in "${packages[@]}"; do
+        if ! command -v "$package" &>/dev/null; then
+            info "Installing $package via Homebrew"
             brew install "$package"
         else
-            success "$package is already installed"
+            success "$package already present"
         fi
     done
 }

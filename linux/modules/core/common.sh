@@ -36,8 +36,41 @@ init_recommended_profile() {
     PROFILE_SETTINGS["FIREWALL_DEFAULT_POLICY"]="drop"
     PROFILE_SETTINGS["IPV6_ENABLED"]="yes"
     PROFILE_SETTINGS["AUDITD_ENABLED"]="yes"
-    PROFILE_SETTINGS["FAIL2BAN_ENABLED"]="yes"
+    PROFILE_SETTINGS["FAIL2BAN_ENABLED"]="no"
 }
+
+
+get_paranoid_ssh_port() {
+    local port_file="/etc/ssh/paranoid_ssh_port"
+    local port
+    local max_attempts=20
+    local attempt=0
+
+    # If a port was previously selected, return it if free
+    if [[ -f "$port_file" ]]; then
+        port=$(cat "$port_file")
+        if ! ss -ltn | awk '{print $4}' | grep -q ":$port$"; then
+            echo "$port"
+            return 0
+        else
+            log_warn "Stored SSH port $port is in use — selecting a new port"
+        fi
+    fi
+
+    # Try picking a free random port
+    while (( attempt < max_attempts )); do
+        port=$(shuf -i 20000-60000 -n 1)
+        if ! ss -ltn | awk '{print $4}' | grep -q ":$port$"; then
+            echo "$port" | tee "$port_file"
+            return 0
+        fi
+        ((attempt++))
+    done
+
+    log_error "Failed to find a free SSH port after $max_attempts attempts"
+    return 1
+}
+
 
 # Initialize paranoid profile with maximum security
 init_paranoid_profile() {
@@ -45,7 +78,11 @@ init_paranoid_profile() {
     PROFILE_SETTINGS["PASSWORD_MAX_DAYS"]=30
     PROFILE_SETTINGS["PASSWORD_MIN_DAYS"]=21
     PROFILE_SETTINGS["PASSWORD_WARN_AGE"]=14
-    PROFILE_SETTINGS["SSH_PORT"]="$(shuf -i 49152-65535 -n 1)"  # Random high port
+        # Pick a safe SSH port
+    PROFILE_SETTINGS["SSH_PORT"]="$(get_paranoid_ssh_port)" || {
+        log_error "Cannot initialize paranoid profile without a valid SSH port"
+        return 1
+    }
     PROFILE_SETTINGS["SSH_PERMIT_ROOT_LOGIN"]="no"
     PROFILE_SETTINGS["SSH_PASSWORD_AUTH"]="no"
     PROFILE_SETTINGS["FIREWALL_DEFAULT_POLICY"]="drop"
