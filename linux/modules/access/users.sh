@@ -3,14 +3,25 @@
 lock_system_accounts() {
     log_info "Securing system accounts by restricting shell access"
     log_info "Identifying and locking non-essential system accounts"
+
     while IFS=: read -r name _ uid gid gecos home shell; do
+
+        # Skip root explicitly
+        if [[ "$name" == "root" ]]; then
+            continue
+        fi
+
+        # Lock only non-login system accounts
         if [[ $uid -lt 1000 && $shell != */nologin && $shell != */false ]]; then
             if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
                 log_info "[dry-run] usermod -s /usr/sbin/nologin $name"
             else
-                command -v usermod >/dev/null 2>&1 && usermod -s /usr/sbin/nologin "$name" 2>/dev/null || true
+                if command -v usermod >/dev/null 2>&1; then
+                    usermod -s /usr/sbin/nologin "$name" 2>/dev/null || true
+                fi
             fi
         fi
+
     done </etc/passwd
 }
 
