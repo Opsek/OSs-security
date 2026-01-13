@@ -93,12 +93,16 @@ configure_ufw_firewall() {
     ssh_port=$(get_profile_setting "SSH_PORT")
 
     # Apply paranoid mode restrictions if enabled
-    if [[ "${HARDEN_PROFILE:-}" == "paranoid" ]]; then
+    local profile_name
+    profile_name=$(get_profile_setting "PROFILE_NAME")
+    if [[ "$profile_name" == "paranoid" ]]; then
         log_info "Applying paranoid mode restrictions"
         log_info "$ssh_port"
 
-        # Deny default SSH completely
-        ufw deny 22/tcp comment 'Block default SSH'
+        # Block default SSH port if it's different from the profile port
+        if [[ "$ssh_port" != "22" ]]; then
+            ufw deny 22/tcp comment 'Block default SSH'
+        fi
 
         # Allow and rate-limit only on the hardened port
         ufw allow "$ssh_port/tcp" comment 'Allow hardened SSH port'

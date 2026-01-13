@@ -17,26 +17,31 @@ Some hardening steps require **manual user action** and are not included in auto
 
 ## 🚀 Usage
 
-### Option 1 – Run directly from PowerShell
+### ⚠️ Security Warning - Read First!
+**Never execute scripts directly from the internet without review!** Always:
+1. Download the script first
+2. Review the code to understand what it does
+3. Only execute after you've verified it's safe
+
+### Option 1 – Recommended: Download and Review First
+1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1)  
+2. Right-click the downloaded file → **Run with PowerShell** (as Administrator)
+3. Review the script content before execution if possible
+
+### Option 2 – Manual Download (Advanced)
+1. Open **PowerShell as Administrator**
+2. Download manually: `Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Opsek/OSs-security/refs/heads/main/windows/hardening-windows.ps1' -OutFile 'hardening-windows.ps1'`
+3. Review the downloaded file, then execute: `.\hardening-windows.ps1`
+
+### Option 3 – Direct Execution (Not Recommended)
+⚠️ **Security Risk**: This executes remote code without review
+Only use if you trust the source and understand the risks:
+
 Open **PowerShell as Administrator** and paste this one-liner:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force ; irm 'https://raw.githubusercontent.com/Opsek/OSs-security/refs/heads/main/windows/hardening-windows.ps1' | iex
 ```
-
-![](assets/windows_howto.gif)
-
-
-### Option 2 – Run from CMD
-Open **Command Prompt as Administrator** and paste this one-liner:
-
-```cmd
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm 'https://raw.githubusercontent.com/Opsek/OSs-security/refs/heads/main/windows/hardening-windows.ps1' | iex"
-```
-
-### Option 3 – Download and run manually
-1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1)  
-2. Right-click the downloaded file → **Run with PowerShell** (as Administrator).
 
 ---
 

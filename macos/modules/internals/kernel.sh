@@ -8,6 +8,9 @@
 secure_keyboard_settings() {
     info "OPSEK - Configuring secure keyboard settings"
     
+    backup_file "$HOME/Library/Preferences/.GlobalPreferences.plist"
+    backup_file "$HOME/Library/Preferences/com.apple.universalaccess.plist"
+    
     # Disable press and hold for accented characters
     execute "defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false"
     
@@ -54,9 +57,11 @@ enhance_logging() {
     info "OPSEK - Enhancing system logging"
     
     # Enable install logging
+    backup_file "/Library/Preferences/com.apple.installer.plist"
     execute "defaults write /Library/Preferences/com.apple.installer UsePackageInstallationLog -bool true"
     
     # Configure log retention
+    backup_file "/etc/security/audit_control"
     execute "sed -i '' 's/^expire-after:.*/expire-after:90d/' /etc/security/audit_control"
     
 }

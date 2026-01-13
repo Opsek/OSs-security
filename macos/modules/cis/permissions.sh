@@ -101,6 +101,8 @@ configure_keychain_sleep_lock() {
 enable_certificate_checking() {
     info "CIS 5.6 - Enabling certificate revocation checking"
     
+    backup_file "$HOME/Library/Preferences/com.apple.security.revocation.plist"
+    
     execute "defaults write com.apple.security.revocation CRLStyle -string RequireIfPresent"
     execute "defaults write com.apple.security.revocation OCSPStyle -string RequireIfPresent"
     
@@ -127,6 +129,8 @@ disable_automatic_login() {
 # CIS 5.9 - Require a password to wake the computer from sleep or screen saver
 require_password_wake() {
     info "CIS 5.9 - Requiring password on wake"
+    
+    backup_file "$HOME/Library/Preferences/com.apple.screensaver.plist"
     
     execute "defaults write com.apple.screensaver askForPassword -int 1"
     execute "defaults write com.apple.screensaver askForPasswordDelay -int 0"

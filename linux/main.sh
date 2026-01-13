@@ -289,22 +289,8 @@ main() {
         fi
     fi
 
-    # Run modules based on profile
-    if [[ "$PROFILE" == "paranoid" ]]; then
-        # Paranoid profile includes all security measures
-        DISABLED_IPV6=true
-        SSH_CUSTOM_PORT=true
-        NO_ROOT_SSH=true
-        STRICT_PERMISSIONS=true
-        run_all_modules
-    else
-        # Recommended profile runs with standard settings
-        DISABLED_IPV6=false
-        SSH_CUSTOM_PORT=false
-        NO_ROOT_SSH=false
-        STRICT_PERMISSIONS=false
-        run_all_modules
-    fi
+    # Run all modules with profile-based configurations
+    run_all_modules
 
     # Show completion message
     echo

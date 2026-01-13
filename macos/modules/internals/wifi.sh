@@ -18,6 +18,10 @@ disable_wifi() {
         fi
     done
     
+    # Backup files before modification
+    backup_file "$HOME/Library/Preferences/com.apple.systemuiserver.plist"
+    backup_file "/Library/Preferences/SystemConfiguration/com.apple.airport.preferences.plist"
+    
     # Disable Wi-Fi menu bar icon
     execute "defaults write com.apple.systemuiserver 'NSStatusItem Visible com.apple.menu.airport' -bool false"
     

@@ -17,6 +17,13 @@ enable_lockdown_mode() {
         return 1
     fi
     
+    # Backup files before modification
+    backup_file "$HOME/Library/Preferences/com.apple.Safari.plist"
+    backup_file "$HOME/Library/Preferences/com.apple.WebKit.plist"
+    backup_file "$HOME/Library/Preferences/.GlobalPreferences.plist"
+    backup_file "$HOME/Library/Preferences/com.apple.Messages.plist"
+    backup_file "$HOME/Library/Preferences/com.apple.facetime.plist"
+    
     # Enable Lockdown Mode via defaults
     execute "defaults write com.apple.Safari LockdownModeEnabled -bool true"
     execute "defaults write com.apple.WebKit LockdownModeEnabled -bool true"
