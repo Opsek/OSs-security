@@ -33,10 +33,21 @@ configure_ssh_security() {
     log_info "SSH server detected - proceeding with security hardening"
     log_info "Configuring SSH security settings for enhanced protection"
     log_info "Setting up SSH protocol and authentication restrictions"
-    # Basic SSH protocol and authentication settings
+    
+    # Get SSH configuration from profile
+    local ssh_port
+    local permit_root_login
+    local password_auth
+    
+    ssh_port=$(get_profile_setting "SSH_PORT")
+    permit_root_login=$(get_profile_setting "SSH_PERMIT_ROOT_LOGIN")
+    password_auth=$(get_profile_setting "SSH_PASSWORD_AUTH")
+    
+    # Basic SSH protocol and authentication settings from profile
     ensure_sshd_conf Protocol 2
-    ensure_sshd_conf PermitRootLogin no
-    ensure_sshd_conf PasswordAuthentication no
+    ensure_sshd_conf Port "$ssh_port"
+    ensure_sshd_conf PermitRootLogin "$permit_root_login"
+    ensure_sshd_conf PasswordAuthentication "$password_auth"
     ensure_sshd_conf PubkeyAuthentication yes
     ensure_sshd_conf PermitEmptyPasswords no
     
@@ -56,13 +67,40 @@ configure_ssh_security() {
 }
 
 restart_ssh_service() {
-    log_info "Applying new SSH configuration by restarting the service"
-    if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
-        log_info "[dry-run] systemctl reload sshd || service ssh restart"
+    log_info "Checking SSH service state before applying configuration"
+
+    local ssh_service=""
+    local was_running=false
+
+    # Detect service name
+    if systemctl list-unit-files | grep '^sshd\.service'; then
+        ssh_service="sshd"
+    elif systemctl list-unit-files | grep '^ssh\.service'; then
+        ssh_service="ssh"
     else
-        systemctl reload sshd 2>/dev/null || systemctl restart ssh 2>/dev/null || true
+        log_info "SSH service not installed — skipping"
+        return 0
     fi
-    log_info "SSH service has been configured and restarted"
+
+    # Check if it is currently active
+    if systemctl is-active --quiet "$ssh_service"; then
+        was_running=true
+    fi
+
+    if [[ "$was_running" != true ]]; then
+        log_info "SSH service is not running — will not start it (attack surface preserved)"
+        return 0
+    fi
+
+    log_info "SSH service is running — applying configuration safely"
+
+    if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
+        log_info "[dry-run] systemctl reload $ssh_service || systemctl restart $ssh_service"
+    else
+        systemctl reload "$ssh_service" 2>/dev/null || systemctl restart "$ssh_service" 2>/dev/null || true
+    fi
+
+    log_info "SSH configuration applied without changing exposure"
 }
 
 

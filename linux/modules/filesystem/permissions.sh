@@ -24,7 +24,9 @@ secure_critical_directories() {
     ensure_owner_perm /var/log root root 0755
 
     # Additional paranoid mode restrictions
-    if [[ "$HARDEN_PROFILE" == "paranoid" ]]; then
+    local profile_name
+    profile_name=$(get_profile_setting "PROFILE_NAME")
+    if [[ "$profile_name" == "paranoid" ]]; then
         log_info "Applying paranoid-level directory restrictions"
         log_info "Setting strict permissions on system binaries and configuration directories"
         # Restrict access to system binaries

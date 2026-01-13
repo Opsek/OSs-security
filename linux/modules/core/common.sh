@@ -12,6 +12,7 @@ declare -A PROFILE_SETTINGS
 # Initialize minimal profile with basic security measures
 init_minimal_profile() {
     log_info "Initializing minimal security profile"
+    PROFILE_SETTINGS["PROFILE_NAME"]="minimal"
     PROFILE_SETTINGS["PASSWORD_MAX_DAYS"]=365
     PROFILE_SETTINGS["PASSWORD_MIN_DAYS"]=1
     PROFILE_SETTINGS["PASSWORD_WARN_AGE"]=7
@@ -27,6 +28,7 @@ init_minimal_profile() {
 # Initialize recommended profile with balanced security
 init_recommended_profile() {
     log_info "Initializing recommended security profile"
+    PROFILE_SETTINGS["PROFILE_NAME"]="recommended"
     PROFILE_SETTINGS["PASSWORD_MAX_DAYS"]=90
     PROFILE_SETTINGS["PASSWORD_MIN_DAYS"]=7
     PROFILE_SETTINGS["PASSWORD_WARN_AGE"]=14
@@ -75,6 +77,7 @@ get_paranoid_ssh_port() {
 # Initialize paranoid profile with maximum security
 init_paranoid_profile() {
     log_info "Initializing paranoid security profile"
+    PROFILE_SETTINGS["PROFILE_NAME"]="paranoid"
     PROFILE_SETTINGS["PASSWORD_MAX_DAYS"]=30
     PROFILE_SETTINGS["PASSWORD_MIN_DAYS"]=21
     PROFILE_SETTINGS["PASSWORD_WARN_AGE"]=14
@@ -167,20 +170,29 @@ log_section() {
 }
 
 backup_file() {
-  local file="$1"
-  local stamp="$RUN_STAMP"
-  local rel
-  rel="${file#/}"
-  local dest_dir="$HARDEN_BACKUP_DIR_BASE/$stamp/$(dirname "$rel")"
-  
-  log_verbose "Creating backup of file: $file"
-  mkdir -p "$dest_dir"
-  if [[ -f "$file" ]]; then
-    cp -a "$file" "$dest_dir/" || true
-    log_verbose "Backup created in: $dest_dir"
-  else
-    log_verbose "File $file does not exist - no backup needed"
-  fi
+    local file="$1"
+    local stamp="$RUN_STAMP"
+    local rel dest_dir dest_file
+
+    rel="${file#/}"
+    dest_dir="$HARDEN_BACKUP_DIR_BASE/$stamp/$(dirname "$rel")"
+    dest_file="$dest_dir/$(basename "$file")"
+
+    log_verbose "Ensuring backup exists for: $file"
+    mkdir -p "$dest_dir"
+
+    if [[ ! -f "$file" ]]; then
+        log_verbose "File $file does not exist — no backup needed"
+        return 0
+    fi
+
+    if [[ -e "$dest_file" ]]; then
+        log_verbose "Backup already exists — preserving original: $dest_file"
+        return 0
+    fi
+
+    cp -a "$file" "$dest_file" || true
+    log_verbose "Backup created: $dest_file"
 }
 
 apply_line() {

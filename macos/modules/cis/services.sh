@@ -65,9 +65,11 @@ disable_wake_on_lan() {
     
 }
 
-# CIS 2.11 - Disable AirDrop
+# CIS 2.11 - Disabling AirDrop
 disable_airdrop() {
     info "CIS 2.11 - Disabling AirDrop"
+    
+    backup_file "$HOME/Library/Preferences/com.apple.NetworkBrowser.plist"
     
     execute "defaults write com.apple.NetworkBrowser DisableAirDrop -bool true"
 
