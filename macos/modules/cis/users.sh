@@ -18,6 +18,8 @@ disable_automatic_login() {
 require_password_wake() {
     info "CIS 5.9 - Requiring password on wake"
     
+    backup_file "$HOME/Library/Preferences/com.apple.screensaver.plist"
+    
     execute "defaults write com.apple.screensaver askForPassword -int 1"
     execute "defaults write com.apple.screensaver askForPasswordDelay -int 0"
     
@@ -60,6 +62,8 @@ set_login_message() {
 disable_password_screensaver_mode() {
     info "CIS 5.15 - Configuring screensaver password mode"
     
+    backup_file "$HOME/Library/Preferences/com.apple.screensaver.plist"
+    
     execute "defaults write com.apple.screensaver askForPassword -int 1"
     
 }
@@ -99,6 +103,9 @@ disable_guest_account() {
 disable_guest_shared_folders() {
     info "CIS 6.1.4 - Disabling guest access to shared folders"
     
+    backup_file "/Library/Preferences/com.apple.AppleFileServer.plist"
+    backup_file "/Library/Preferences/SystemConfiguration/com.apple.smb.server.plist"
+    
     execute "defaults write /Library/Preferences/com.apple.AppleFileServer guestAccess -bool false"
     execute "defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server AllowGuestAccess -bool false"
     
@@ -116,6 +123,8 @@ remove_guest_home() {
 show_filename_extensions() {
     info "CIS 6.2 - Showing filename extensions"
     
+    backup_file "$HOME/Library/Preferences/.GlobalPreferences.plist"
+    
     execute "defaults write NSGlobalDomain AppleShowAllExtensions -bool true"
     
 }
@@ -123,6 +132,8 @@ show_filename_extensions() {
 # CIS 6.3 - Disable the automatic run of safe files in Safari
 disable_safari_safe_files() {
     info "CIS 6.3 - Disabling Safari automatic safe file opening"
+    
+    backup_file "$HOME/Library/Preferences/com.apple.Safari.plist"
     
     execute "defaults write com.apple.Safari AutoOpenSafeDownloads -bool false"
     

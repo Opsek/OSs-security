@@ -8,6 +8,10 @@
 disable_bluetooth_completely() {
     info "OPSEK - Completely disabling Bluetooth"
     
+    backup_file "/Library/Preferences/com.apple.Bluetooth.plist"
+    backup_file "$HOME/Library/Preferences/com.apple.Bluetooth.plist"
+    backup_file "$HOME/Library/Preferences/ByHost/com.apple.Bluetooth.plist"
+    
     execute "defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerState -int 0"
     execute "launchctl unload -w /System/Library/LaunchDaemons/com.apple.blued.plist 2>/dev/null || true"
     execute "nvram bluetoothHostControllerSwitchBehavior=never"

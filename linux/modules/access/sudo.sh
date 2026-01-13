@@ -5,18 +5,34 @@ install_sudo() {
 }
 
 configure_sudo_defaults() {
-    backup_file /etc/sudoers
-    
-    # Configure logging
-    apply_line /etc/sudoers "^Defaults\s+logfile\s*=" "Defaults    logfile=/var/log/sudo.log"
-    ensure_owner_perm /var/log/sudo.log root root 0600
-    
-    # Set security options
-    apply_line /etc/sudoers "^Defaults\s+passwd_tries\s*=" "Defaults    passwd_tries=3"
-    apply_line /etc/sudoers "^Defaults\s+requiretty\s*=" "Defaults    requiretty"
-    apply_line /etc/sudoers "^Defaults\s+use_pty\s*=" "Defaults    use_pty"
-}
+    local tmp_file="/etc/sudoers.d/.hardening.tmp"
+    local final_file="/etc/sudoers.d/99-hardening"
 
+    log_info "Configuring sudo using drop-in file"
+
+    mkdir -p /etc/sudoers.d
+    chmod 0750 /etc/sudoers.d
+
+    cat > "$tmp_file" << 'EOF'
+Defaults logfile=/var/log/sudo.log
+Defaults passwd_tries=3
+Defaults requiretty
+Defaults use_pty
+EOF
+
+    chmod 0440 "$tmp_file"
+
+    if ! visudo -cf "$tmp_file"; then
+        log_error "Sudo configuration validation failed — aborting changes"
+        rm -f "$tmp_file"
+        return 1
+    fi
+
+    mv "$tmp_file" "$final_file"
+    log_info "Sudo hardening rules safely installed at $final_file"
+
+    ensure_owner_perm /var/log/sudo.log root root 0600
+}
 
 
 
