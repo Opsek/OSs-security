@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
 install_fail2ban() {
-    # Check if we are in paranoid mode
-    if [[ "${HARDEN_PROFILE:-}" != "paranoid" ]]; then
-        log_info "Fail2ban installation skipped - only available in paranoid mode"
+    # Check if fail2ban is enabled in current profile
+    local fail2ban_enabled
+    fail2ban_enabled=$(get_profile_setting "FAIL2BAN_ENABLED")
+    if [[ "$fail2ban_enabled" != "yes" ]]; then
+        log_info "Fail2ban installation skipped - disabled in current profile"
         return 0
     fi
 
@@ -52,9 +54,11 @@ install_fail2ban() {
 }
 
 configure_fail2ban() {
-    # Check if we are in paranoid mode
-    if [[ "${HARDEN_PROFILE:-}" != "paranoid" ]]; then
-        log_info "Fail2ban configuration skipped - only available in paranoid mode"
+    # Check if fail2ban is enabled in current profile
+    local fail2ban_enabled
+    fail2ban_enabled=$(get_profile_setting "FAIL2BAN_ENABLED")
+    if [[ "$fail2ban_enabled" != "yes" ]]; then
+        log_info "Fail2ban configuration skipped - disabled in current profile"
         return 0
     fi
 

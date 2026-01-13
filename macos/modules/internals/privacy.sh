@@ -8,6 +8,10 @@
 disable_siri_dictation() {
     info "OPSEK - Disabling Siri and dictation"
     
+    backup_file "$HOME/Library/Preferences/com.apple.assistant.support.plist"
+    backup_file "$HOME/Library/Preferences/com.apple.Siri.plist"
+    backup_file "$HOME/Library/Preferences/com.apple.speech.recognition.AppleSpeechRecognition.prefs.plist"
+    
     execute "defaults write com.apple.assistant.support 'Assistant Enabled' -bool false"
     execute "defaults write com.apple.Siri StatusMenuVisible -bool false"
     execute "defaults write com.apple.Siri UserHasDeclinedEnable -bool true"
@@ -19,14 +23,18 @@ disable_siri_dictation() {
 disable_diagnostics() {
     info "OPSEK - Disabling diagnostic and usage data"
     
-    execute "defaults write /Library/Application\\ Support/CrashReporter/DiagnosticMessagesHistory.plist AutoSubmit -bool false"
-    execute "defaults write /Library/Application\\ Support/CrashReporter/DiagnosticMessagesHistory.plist SeedAutoSubmit -bool false"
+    backup_file "/Library/Application Support/CrashReporter/DiagnosticMessagesHistory.plist"
+    
+    execute "defaults write /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist AutoSubmit -bool false"
+    execute "defaults write /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist SeedAutoSubmit -bool false"
     
 }
 
 # Disable location services
 disable_location_services() {
     info "OPSEK - Disabling location services"
+    
+    backup_file "/var/db/locationd/Library/Preferences/ByHost/com.apple.locationd.plist"
     
     execute "defaults write /var/db/locationd/Library/Preferences/ByHost/com.apple.locationd LocationServicesEnabled -bool false"
     
@@ -35,6 +43,8 @@ disable_location_services() {
 # Disable Spotlight suggestions
 disable_spotlight_suggestions() {
     info "OPSEK - Disabling Spotlight suggestions"
+    
+    backup_file "$HOME/Library/Preferences/com.apple.spotlight.plist"
     
     execute "defaults write com.apple.spotlight orderedItems -array \
         '{ enabled = 1; name = APPLICATIONS; }' \
@@ -79,6 +89,8 @@ disable_ipv6_on_interfaces() {
 secure_safari() {
     info "OPSEK - Securing Safari browser"
     
+    backup_file "$HOME/Library/Preferences/com.apple.Safari.plist"
+    
     execute "defaults write com.apple.Safari WebKitJavaEnabled -bool false"
     execute "defaults write com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomatically -bool false"
     execute "defaults write com.apple.Safari SafariGeolocationPermissionPolicy -int 0"
@@ -111,13 +123,16 @@ configure_privacy_settings() {
     info "OPSEK - Configuring privacy settings"
     
     # Disable analytics
-    execute "defaults write /Library/Application\\ Support/CrashReporter/DiagnosticMessagesHistory.plist ThirdPartyDataSubmit -bool false"
+    backup_file "/Library/Application Support/CrashReporter/DiagnosticMessagesHistory.plist"
+    execute "defaults write /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist ThirdPartyDataSubmit -bool false"
     
     # Disable personalized ads
+    backup_file "$HOME/Library/Preferences/com.apple.AdLib.plist"
     execute "defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false"
     execute "defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false"
     
     # Disable Handoff
+    backup_file "$HOME/Library/Preferences/ByHost/com.apple.coreservices.useractivityd.plist"
     execute "defaults write ~/Library/Preferences/ByHost/com.apple.coreservices.useractivityd ActivityAdvertisingAllowed -bool no"
     execute "defaults write ~/Library/Preferences/ByHost/com.apple.coreservices.useractivityd ActivityReceivingAllowed -bool no"
     

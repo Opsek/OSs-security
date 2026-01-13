@@ -103,14 +103,6 @@ OPTIONS:
     --verbose           Show debug output in log
     --help, -h          Show this help
 
-PROFILES:
-    basic      - Essential security with minimal impact
-    moderate   - Balanced security for most environments
-    recommended- Balanced default profile used when no profile flag is provided
-    paranoid   - Maximum restrictions; may break some services
-    strict     - High security for sensitive environments
-    paranoid   - Maximum restrictions; may break some services
-
 EXAMPLES:
     sudo $0 --verbose
     sudo $0 --dry-run
