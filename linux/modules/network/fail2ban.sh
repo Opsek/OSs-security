@@ -79,12 +79,12 @@ configure_fail2ban() {
     fi
 
     local jail=/etc/fail2ban/jail.local
-    backup_file "$jail"
-    
     if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
         log_info "[dry-run] write jail.local and enable fail2ban"
         return
     fi
+    backup_file "$jail"
+    
 
     log_info "Writing fail2ban jail configuration"
     mkdir -p "$(dirname "$jail")" || {
