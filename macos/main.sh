@@ -16,6 +16,7 @@
 #   - Modular architecture for collaborative development
 # ==============================================================================
 
+
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -144,6 +145,10 @@ main() {
     # Display the banner    
     show_banner
     
+    # Get macOS major version
+    OS_VERSION=$(sw_vers -productVersion)
+    OS_MAJOR=$(echo "$OS_VERSION" | cut -d. -f1)
+
     info "macOS Hardening Script started (profile: $PROFILE)"
     info "Hostname: $HOSTNAME"
     info "macOS Version: $(sw_vers -productVersion)"
@@ -151,6 +156,16 @@ main() {
     info "Force Yes: $FORCE_YES"
     info "Lockdown Mode: $ENABLE_LOCKDOWN"
     echo
+
+    # List of EOL macOS versions
+    # macOS Ventura (13) is no longer supported
+    EOL_VERSIONS=("13")
+
+    # Check if current version is EOL
+    if [[ " ${EOL_VERSIONS[@]} " =~ " ${OS_MAJOR} " ]]; then
+        echo "⚠️ WARNING: Your macOS version ($OS_VERSION) is no longer receiving security updates from Apple."
+        echo "⚠️ Consider upgrading to a supported version (macOS 14 or newer) for continued security."
+    fi
     
     # Check prerequisites
     check_prereqs
