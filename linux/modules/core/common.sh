@@ -201,12 +201,11 @@ apply_line() {
   local pattern="$1"; shift
   local line="$1"; shift
   log_verbose "Configuring setting in $file: $line"
-
-  backup_file "$file"
   if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
     log_info "[dry-run] ensure '$pattern' in $file -> $line"
     return 0
   fi
+  backup_file "$file"
   touch "$file"
   if grep -Eq "^$pattern" "$file"; then
     sed -ri "s|^$pattern.*|$line|" "$file"
@@ -217,11 +216,11 @@ apply_line() {
 
 ensure_owner_perm() {
   local path="$1" owner="$2" group="$3" mode="$4"
-  backup_file "$path"
   if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
     log_info "[dry-run] chown $owner:$group $path && chmod $mode $path"
     return 0
   fi
+  backup_file "$path"
   chown "$owner:$group" "$path" 2>/dev/null || true
   chmod "$mode" "$path" 2>/dev/null || true
 }
@@ -319,11 +318,11 @@ init_runtime() {
 sysctl_apply() {
   local key="$1" value="$2"
   log_info "Applying kernel parameter: $key = $value"
-  backup_file /etc/sysctl.conf
   if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
     log_info "[dry-run] sysctl -w $key=$value and persist in /etc/sysctl.d/99-harden.conf"
     return 0
   fi
+  backup_file /etc/sysctl.conf
   mkdir -p /etc/sysctl.d
   apply_line /etc/sysctl.d/99-harden.conf "${key//./\\.}\s*=" "$key = $value"
   sysctl -w "$key=$value" || true
@@ -331,17 +330,21 @@ sysctl_apply() {
 
 sed_comment_out() {
   local file="$1" pattern="$2"
-  backup_file "$file"
   if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
     log_info "[dry-run] Comment out matching '$pattern' in $file"
     return 0
   fi
+  backup_file "$file"
   sed -ri "/$pattern/ s/^/# /" "$file" 2>/dev/null || true
 }
 
 ensure_sshd_conf() {
   local key="$1" value="$2"
   local file="/etc/ssh/sshd_config"
+  if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
+    log_info "Setting SSH configuration: $key = $value"
+    return 0
+  fi
   log_info "Setting SSH configuration: $key = $value"
   mkdir -p /etc/ssh
   apply_line "$file" "${key//\//\/}" "$key $value"

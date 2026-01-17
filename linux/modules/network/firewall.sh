@@ -75,16 +75,15 @@ configure_ufw_firewall() {
     
     # Configure rules based on active services
     for service in $active_services; do
-        case "${service%%:*}" in
+        local name="${service%%:*}"
+        local port="${service#*:}"
+
+        case "$name" in
             ssh)
-                local port="${service#*:}"
-                log_info "Allowing SSH access on port $port (active service)"
                 ufw allow "$port/tcp" comment 'SSH access'
                 ;;
-            web)
-                log_info "Allowing HTTP/HTTPS access (active service)"
-                ufw allow http comment 'HTTP access'
-                ufw allow https comment 'HTTPS access'
+            apache2|httpd|nginx)
+                ufw allow "$port/tcp" comment "$name access"
                 ;;
         esac
     done
