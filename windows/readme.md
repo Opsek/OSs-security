@@ -31,17 +31,7 @@ Open **PowerShell as Administrator** and paste this one-liner:
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force ; irm 'https://raw.githubusercontent.com/Opsek/OSs-security/refs/heads/main/windows/hardening-windows.ps1' | iex
 ```
 
-### Option 2 – Manual Download (Advanced)
-
-1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1)  
-
-2. Open **CMD as Administrator**
-
-```cmd
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm 'https://raw.githubusercontent.com/Opsek/OSs-security/refs/heads/main/windows/hardening-windows.ps1' | iex"
-```
-
-### Option 3 – Download and run manually
+### Option 2 – Download and run manually
 1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1)  
 2. Right-click the downloaded file → **Run with PowerShell** (as Administrator).
 
@@ -49,30 +39,86 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "irm 'https://raw.githubu
 
 ## 🔧 Automated hardening commands
 
-| Command | What we are doing | What it protects from |
-|---------|------------------|------------------------|
-| `Set-ItemProperty ... ConsentPromptBehaviorAdmin 2` | Force UAC to **Always Notify** | Prevents silent privilege escalation |
-| `Set-NetFirewallProfile ...` | Enable Firewall (Domain, Public, Private) | Blocks unauthorized inbound/outbound traffic |
-| `Set-ProcessMitigation ...` | Enable **DEP, ASLR, SEHOP** | Stops memory-based exploits |
-| `Set-MpPreference -PUAProtection Enabled` | Enable PUA protection | Blocks unwanted / malicious software |
-| `Set-Service wuauserv ...` | Ensure Windows Update is enabled | Protects against known vulnerabilities |
-| `New-ItemProperty ... HypervisorEnforcedCodeIntegrity` | Enable **Memory Integrity** | Prevents kernel-level tampering |
-| `Enable-BitLocker -TpmProtector` | Enable BitLocker (if supported) | Protects data at rest from theft |
-| `reg add ... DeviceGuard / LsaCfgFlags` | Enable **Credential Guard** | Protects credentials from theft (Mimikatz, etc.) |
-| `reg add ... VBAWarnings=4` | Disable Office Word macros | Blocks macro-based malware |
-| `powercfg /change monitor-timeout-ac 1` | Set screen timeout to 1 min | Reduces risk from unattended sessions |
-| `reg add ... RunAsPPL=1` | Enable **LSA Protection** | Protects LSASS from credential dumping |
-| `reg add ... DontDisplayLastUserName=1` | Hide last logged-in user | Mitigates username harvesting |
-| `Set-ItemProperty ... fDenyTSConnections=1` | Disable Remote Desktop | Prevents RDP brute force attacks |
-| `Disable-WindowsOptionalFeature -FeatureName SMB1Protocol` | Disable SMBv1 | Blocks exploitation via WannaCry/EternalBlue |
-| `Confirm-SecureBootUEFI` | Check Secure Boot status | Protects boot chain from tampering |
+
+| Command | What we are doing | What it protects from | Edition Support |
+|---------|------------------|------------------------|------------------|
+| `Set-ItemProperty ... ConsentPromptBehaviorAdmin 2` | Force UAC to **Always Notify** | Prevents silent privilege escalation | All |
+| `Set-NetFirewallProfile ...` | Enable Firewall (Domain, Public, Private) | Blocks unauthorized inbound/outbound traffic | All |
+| `Set-ProcessMitigation ...` | Enable **DEP, ASLR, SEHOP** | Stops memory-based exploits | **Pro+** (skipped on Home) |
+| `Set-MpPreference -PUAProtection Enabled` | Enable PUA protection | Blocks unwanted / malicious software | All |
+| `Get-MpComputerStatus` | Verify Defender status | Detects if antivirus is disabled by GPO | All |
+| `Set-Service wuauserv ...` | Ensure Windows Update is enabled | Protects against known vulnerabilities | All |
+| `New-ItemProperty ... HypervisorEnforcedCodeIntegrity` | Enable **Memory Integrity** | Prevents kernel-level tampering | **Pro+** |
+| `Get-BitLockerVolume / Enable-BitLocker` | Enable BitLocker with TPM protector | Protects data at rest from theft | **Pro+** (Home: Device Encryption) |
+| `Get-Tpm` | Verify TPM presence before BitLocker | Ensures cryptographic strength | **Pro+** |
+| `reg add ... DeviceGuard / LsaCfgFlags` | Enable **Credential Guard** (with CPU check) | Protects credentials from theft (Mimikatz, etc.) | **Pro+** (Home: skipped) |
+| `reg add ... VBAWarnings=4` | Disable Office Word macros | Blocks macro-based malware | All |
+| `powercfg /change monitor-timeout-ac 1` | Set screen timeout to 1 min | Reduces risk from unattended sessions | All |
+| `reg add ... RunAsPPL=1` | Enable **LSA Protection** | Protects LSASS from credential dumping | All |
+| `Set-ItemProperty ... fDenyTSConnections=1` | Disable Remote Desktop | Prevents RDP brute force attacks | All |
+| `Disable-WindowsOptionalFeature -FeatureName SMB1Protocol` | Disable SMBv1 | Blocks exploitation via WannaCry/EternalBlue | All |
+| `Confirm-SecureBootUEFI` | Check Secure Boot (UEFI only) | Protects boot chain from tampering | **UEFI systems** |
+| `Set-ItemProperty ... HideFileExt=0` | Enable file extension visibility | Improves detection of suspicious files | All |
+| `Set-ItemProperty ... TurnOffWindowsCopilot` | Disable Windows Copilot / AI | Reduces telemetry & data collection | All |
+| `reg add ... DisableFileSyncNGSC=1` | Disable OneDrive cloud sync | Prevents forced cloud integration | All |
+| Uninstall OneDrive client | remove OneDrive | Reduces bloatware & background processes | All |
+
 
 ---
 
 ## 🧩 Optional (User-confirmed) Modules
 
-| Command | What we are doing | What it protects from |
-|---------|------------------|------------------------|
-| `reg add ... DenyRemovableDevices=1` | Block USB removable device installation | Prevents USB malware / BadUSB |
-| `Set-DnsClientServerAddress ... 8.8.8.8` | Set secure DNS (Google) | Protects from DNS hijacking/malicious resolvers |
-| `Set-MpPreference -EnableControlledFolderAccess Enabled` | Enable Controlled Folder Access | Blocks ransomware from encrypting user data |
+| Command | What we are doing | What it protects from | Notes |
+|---------|------------------|------------------------|-------|
+| `reg add ... DenyRemovableDevices=1` | Block USB removable device installation | Prevents USB malware / BadUSB | May break legitimate USB usage |
+| `Set-DnsClientServerAddress ... 9.9.9.9` | Set secure DNS (Quad9) | Protects from DNS hijacking/malicious resolvers | With validation test |
+| `Set-MpPreference -EnableControlledFolderAccess Enabled` | Enable Controlled Folder Access | Blocks ransomware from encrypting user data | May block legitimate apps |
+
+
+## ⚡ Reboot Requirements
+
+The following changes require a **system reboot** to take effect:
+
+- ✅ Memory Integrity (Device Guard)
+- ✅ Credential Guard
+- ✅ LSA Protection (RunAsPPL)
+- ✅ BitLocker encryption (initial setup)
+- ✅ SMBv1 disable
+- ✅ Most registry-based Group Policies
+
+**The script will prompt you to reboot at the end.** Plan accordingly!
+
+---
+
+## 🔍 Troubleshooting
+
+### Script fails with "Administrator privileges required"
+- Run PowerShell as Administrator (right-click → "Run as administrator")
+
+### BitLocker recovery key not displayed
+- Check the audit log: `%TEMP%\Windows_Hardening_*.log`
+- Recovery key is saved to the log file with [CRITICAL] severity
+
+### Process mitigation fails on Home Edition
+- This is expected. Home Edition doesn't support advanced process mitigation.
+- The script automatically skips this with a message.
+
+### DNS validation fails
+- Check your internet connection
+- Verify 9.9.9.9 (Quad9) is reachable in your network
+- Check firewall rules for DNS (port 53)
+
+### Credential Guard doesn't enable
+- Check if CPU virtualization is enabled in BIOS
+- Verify Windows edition is Pro or Enterprise
+- Run: `systeminfo | findstr /C:"Hyper-V"`
+
+## 📚 References
+
+- [Windows Security Baselines (CIS)](https://www.cisecurity.org/benchmark/windows)
+- [Microsoft Security Best Practices](https://docs.microsoft.com/en-us/security/)
+- [BitLocker Deployment Guide](https://docs.microsoft.com/en-us/windows/security/information-protection/bitlocker/bitlocker-deployment-guide-planning)
+- [Credential Guard](https://docs.microsoft.com/en-us/windows/security/identity-protection/credential-guard/credential-guard)
+- [Windows Defender Guide](https://docs.microsoft.com/en-us/windows/security/threat-protection/microsoft-defender-antivirus/microsoft-defender-antivirus-in-windows-10)
+- [Quad9 DNS](https://www.quad9.net/)
+- [LSA Protection](https://docs.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/configuring-additional-lsa-protection)
