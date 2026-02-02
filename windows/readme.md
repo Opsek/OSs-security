@@ -1,17 +1,11 @@
-# 🛡️ Windows hardening script
+# 🛡️ Windows Hardening — README
 
-A PowerShell script to apply essential Windows hardening measures.  
-Must run as **Administrator** for full effect.
+This repository contains `hardening-windows.ps1`, a PowerShell script that audits and applies a set of Windows security hardening steps.
 
----
-
-## ⚠️ What cannot be fully automated
-Some hardening steps require **manual user action** and are not included in automation:
-- Switching your main account to **Standard User**
-- Manually adding **Protected Folders** in Windows Security
-- Setting up **Dynamic Lock** with your phone
-- Installing optional features (e.g. **Windows Sandbox**) if not already installed
-- Some **Group Policies** that have no `reg.exe` equivalent (possible with `LGPO.exe`)
+Key points:
+- Two primary modes: **Audit** (non-destructive) and **Harden** (applies fixes).
+- Modules are defined as Check/Apply pairs and registered in a `$Modules` registry.
+- The script writes a timestamped log to `%TEMP%\Windows_Hardening_YYYYMMDD_HHMMSS.log`.
 
 ---
 
@@ -23,19 +17,35 @@ Some hardening steps require **manual user action** and are not included in auto
 2. Review the code to understand what it does
 3. Only execute after you've verified it's safe
 
-### Option 1 – Run directly from PowerShell
-
-Open **PowerShell as Administrator** and paste this one-liner:
+Run PowerShell as Administrator :
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force ; irm 'https://raw.githubusercontent.com/Opsek/OSs-security/refs/heads/main/windows/hardening-windows.ps1' | iex
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Opsek/OSs-security/main/windows/hardening-windows.ps1" -OutFile ".\hardening-windows.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\hardening-windows.ps1 -Audit
+```
+---
+
+## Modes and examples
+
+- `-Audit` — Collects checks and reports statuses. No changes are made.
+- `-Harden` — Applies remediation for modules reporting `FAIL`. Modules that require confirmation still prompt the user.
+- `-Module <regex>` — Filters modules by regular expression on the module `Name` (case-insensitive). Useful for narrowing scope.
+
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass
+
+# Audit (no changes)
+.\hardening-windows.ps1 -Audit
+
+# Apply hardening changes
+.\hardening-windows.ps1 -Harden
+
+# Audit a specific module (regex filter)
+.\hardening-windows.ps1 -Audit -Module "UAC"
+
 ```
 
-### Option 2 – Download and run manually
-1. [Download windows-hardening.ps1](https://github.com/Opsek/OSs-security/blob/main/windows/hardening-windows.ps1)  
-2. Right-click the downloaded file → **Run with PowerShell** (as Administrator).
-
----
 
 ## 🔧 Automated hardening commands
 
