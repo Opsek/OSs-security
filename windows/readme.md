@@ -46,6 +46,8 @@ powershell -NoProfile -ExecutionPolicy Bypass
 
 ```
 
+![Demo](assets/windows_howto.gif)
+
 
 ## 🔧 Automated hardening commands
 
