@@ -10,7 +10,7 @@
 #   - CIS Benchmark compliance
 #   - NIST 800-53 controls
 #   - OPSEK project recommendations
-#   - Multi-profile hardening (basic, moderate, strict, paranoid)
+#   - Multi-profile hardening (recommended paranoid)
 #   - Automated backup and rollback capabilities
 #   - Comprehensive logging and audit trail
 #   - Modular architecture for collaborative development
@@ -34,6 +34,9 @@ FORCE_YES=false
 VERBOSE=false
 ENABLE_LOCKDOWN=false
 ENABLE_CHECKS=false
+GENERATE_MDM=false
+MDM_PROFILE="recommended"
+MDM_OUTPUT_DIR="$SCRIPT_DIR/mdm_profiles"
 
 # ==============================================================================
 # INITIALIZATION
@@ -43,9 +46,9 @@ ENABLE_CHECKS=false
 source "$SCRIPT_DIR/utils/common.sh"
 source "$SCRIPT_DIR/utils/logging.sh"
 source "$SCRIPT_DIR/utils/backup.sh"
+source "$SCRIPT_DIR/modules/mdm/profile_generator.sh"
 
-# Initialize environment
-init_environment
+
 
 # ==============================================================================
 # COMPLIANCE CHECKING FUNCTIONS
@@ -119,12 +122,16 @@ run_opsek_checks() {
 
 while [[ ${#} -gt 0 ]]; do
     case "$1" in
-    --paranoid) PROFILE="paranoid"; shift ;;
+        --paranoid) PROFILE="paranoid"; shift ;;
         --lockdown) ENABLE_LOCKDOWN=true; shift ;;
         --checks) ENABLE_CHECKS=true; shift ;;
         --dry-run) DRY_RUN=true; shift ;;
         --yes) FORCE_YES=true; shift ;;
         --verbose) VERBOSE=true; shift ;;
+        --generate-mdm) GENERATE_MDM=true; shift ;;
+        --mdm-profile) MDM_PROFILE="$2"; shift 2 ;;
+        --mdm-output) MDM_OUTPUT_DIR="$2"; shift 2 ;;
+        --mdm-all) GENERATE_MDM=true; MDM_PROFILE="all"; shift ;;
         --help) show_help; exit 0 ;;
         -h) show_help; exit 0 ;;
         *) error "Unknown option: $1"; show_help; exit 1 ;;
@@ -133,7 +140,7 @@ done
 
 # Validate profile
 case "$PROFILE" in
-    basic|moderate|strict|paranoid|recommended) ;;
+    paranoid|recommended) ;;
     *) error "Unknown profile: $PROFILE"; show_help; exit 1 ;;
 esac
 
@@ -144,7 +151,7 @@ esac
 main() {
     # Display the banner    
     show_banner
-    
+
     # Get macOS major version
     OS_VERSION=$(sw_vers -productVersion)
     OS_MAJOR=$(echo "$OS_VERSION" | cut -d. -f1)
@@ -156,6 +163,29 @@ main() {
     info "Force Yes: $FORCE_YES"
     info "Lockdown Mode: $ENABLE_LOCKDOWN"
     echo
+    
+    # Handle MDM profile generation
+    if [[ "$GENERATE_MDM" == true ]]; then
+        info "Generating MDM hardening profiles..."
+        echo
+
+        # Validate MDM profile
+        case "$MDM_PROFILE" in
+            recommended|paranoid) ;;
+            *) error "Invalid MDM profile: $MDM_PROFILE (use: recommended, paranoid)"; exit 1 ;;
+        esac
+        
+        local mdm_file=$(generate_mdm_profile "$MDM_PROFILE" "$MDM_OUTPUT_DIR")
+        echo "✓ Profile generated: $mdm_file"
+        echo
+        
+        validate_profile_file "$mdm_file"
+        profile_summary "$mdm_file"
+        show_mdm_installation_instructions "$mdm_file"
+        
+        exit 1
+    fi
+    
 
     # List of EOL macOS versions
     # macOS Ventura (13) is no longer supported
@@ -167,6 +197,9 @@ main() {
         echo "⚠️ Consider upgrading to a supported version (macOS 14 or newer) for continued security."
     fi
     
+    # Initialize environment
+    init_environment
+
     # Check prerequisites
     check_prereqs
     
