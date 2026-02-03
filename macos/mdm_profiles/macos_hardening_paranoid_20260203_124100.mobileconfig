@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.mobiledevice.passwordpolicy</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.password.7a9804ea-a779-49ba-8205-7deb17105392</string>
+            <key>PayloadUUID</key>
+            <string>f87f9653-252b-4049-bfc3-26b3c8bd4d0e</string>
+            <key>PayloadDisplayName</key>
+            <string>Password Policy</string>
+            <key>allowSimple</key>
+            <false/>
+            <key>forcePIN</key>
+            <true/>
+            <key>maxFailedAttempts</key>
+            <integer>3</integer>
+            <key>maxPINAgeInDays</key>
+            <integer>90</integer>
+            <key>minComplexChars</key>
+            <integer>4</integer>
+            <key>minLength</key>
+            <integer>16</integer>
+            <key>requireAlphanumeric</key>
+            <true/>
+        </dict>
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.screensaver</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.screensaver.e70cd5c2-8f62-49b7-b70c-a1e75a6d79c8</string>
+            <key>PayloadUUID</key>
+            <string>2c7e5b1d-6284-499a-b5b1-c4f3d3542317</string>
+            <key>PayloadDisplayName</key>
+            <string>Screensaver Policy</string>
+            <key>askForPassword</key>
+            <true/>
+            <key>askForPasswordDelay</key>
+            <integer>0</integer>
+            <key>idleTime</key>
+            <integer>300</integer>
+        </dict>
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX.FileVault2</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.filevault.8f368ab5-76ed-4272-adfd-76d7990e9b34</string>
+            <key>PayloadUUID</key>
+            <string>9a05f19d-1277-4a28-8e12-5e08683fa4c7</string>
+            <key>PayloadDisplayName</key>
+            <string>FileVault Configuration</string>
+            <key>Enable</key>
+            <string>On</string>
+            <key>Defer</key>
+            <false/>
+            <key>UseRecoveryKey</key>
+            <true/>
+            <key>ShowRecoveryKey</key>
+            <false/>
+        </dict>
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.security.firewall</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.firewall.a3992df6-22be-4367-937d-791b8012f6c6</string>
+            <key>PayloadUUID</key>
+            <string>4309495f-410a-41b5-a4c7-9f9b5357e17e</string>
+            <key>PayloadDisplayName</key>
+            <string>Firewall Configuration</string>
+            <key>EnableFirewall</key>
+            <true/>
+            <key>BlockAllIncoming</key>
+            <false/>
+            <key>EnableStealthMode</key>
+            <true/>
+        </dict>
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.systempolicy.control</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.gatekeeper.af012e35-8edf-451a-9152-b9f357df2f5b</string>
+            <key>PayloadUUID</key>
+            <string>00411eeb-6a63-4275-b780-857d96a451b4</string>
+            <key>PayloadDisplayName</key>
+            <string>Gatekeeper Configuration</string>
+            <key>EnableAssessment</key>
+            <true/>
+            <key>AllowIdentifiedDevelopers</key>
+            <false/>
+        </dict>
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.guest.ff069e66-7904-4e90-b09f-42e80dde2163</string>
+            <key>PayloadUUID</key>
+            <string>c9a795d5-ddf5-41f4-a039-5700d264795c</string>
+            <key>PayloadDisplayName</key>
+            <string>Guest Account Policy</string>
+            <key>DisableGuestAccount</key>
+            <true/>
+        </dict>
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.SoftwareUpdate</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.updates.1982cabd-79ce-4b6a-8748-25e82e43e536</string>
+            <key>PayloadUUID</key>
+            <string>3d5ee80b-edaa-41a0-b8bd-37f2e41339b6</string>
+            <key>PayloadDisplayName</key>
+            <string>Software Update Policy</string>
+            <key>AutomaticCheckEnabled</key>
+            <true/>
+            <key>AutomaticDownload</key>
+            <true/>
+            <key>ConfigDataInstall</key>
+            <true/>
+            <key>CriticalUpdateInstall</key>
+            <true/>
+        </dict>
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCXBluetooth</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.bluetooth.973e2da3-800b-4b65-9710-1195fb01e38b</string>
+            <key>PayloadUUID</key>
+            <string>8e38c4ac-baa0-47f7-a35f-b7e44ae964d1</string>
+            <key>PayloadDisplayName</key>
+            <string>Bluetooth Policy</string>
+            <key>DisableBluetooth</key>
+            <true/>
+        </dict>
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.applicationaccess</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.airdrop.ab37fc05-6e34-4666-a1ac-263b871a0716</string>
+            <key>PayloadUUID</key>
+            <string>cd65116a-8e05-4a75-8bbe-c4a54c90fa2e</string>
+            <key>PayloadDisplayName</key>
+            <string>AirDrop Policy</string>
+            <key>allowAirDrop</key>
+            <false/>
+        </dict>
+    </array>
+    <key>PayloadDescription</key>
+    <string>macOS Security Hardening Profile - paranoid</string>
+    <key>PayloadDisplayName</key>
+    <string>Security Hardening - paranoid</string>
+    <key>PayloadIdentifier</key>
+    <string>com.security.hardening.paranoid.4484992c-9471-4ccf-87ee-2c274b488662</string>
+    <key>PayloadOrganization</key>
+    <string>Security Team</string>
+    <key>PayloadRemovalDisallowed</key>
+    <true/>
+    <key>PayloadScope</key>
+    <string>System</string>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>4484992c-9471-4ccf-87ee-2c274b488662</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>

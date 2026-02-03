@@ -7,7 +7,7 @@
 	<key>PayloadDescription</key>
 	<string>Maximum security hardening profile with comprehensive controls. Includes all recommended policies plus strict privacy controls, DNS security, audit logging, and enhanced restrictions. Best for high-security environments.</string>
 	<key>PayloadIdentifier</key>
-	<string>com.security.hardening.paranoid.199db612-ae5a-480c-baf8-363f2d78feb9</string>
+	<string>com.security.hardening.paranoid.21587926-2a85-4e7c-b713-4468475439ef</string>
 	<key>PayloadOrganization</key>
 	<string>Security Hardening Organization</string>
 	<key>PayloadRemovalDisallowed</key>
@@ -17,11 +17,11 @@
 	<key>PayloadType</key>
 	<string>Configuration</string>
 	<key>PayloadUUID</key>
-	<string>199db612-ae5a-480c-baf8-363f2d78feb9</string>
+	<string>21587926-2a85-4e7c-b713-4468475439ef</string>
 	<key>PayloadVersion</key>
 	<integer>1</integer>
 	<key>GeneratedDate</key>
-	<string>20260203-111841</string>
+	<string>20260203-122310</string>
 	<key>PayloadContent</key>
 <array>
 	<dict>
@@ -32,7 +32,7 @@
 		<key>PayloadType</key>
 		<string>com.apple.mobiledevice.passwordpolicy</string>
 		<key>PayloadUUID</key>
-		<string>67f7f936-7a5f-4f52-aebd-bd76fbb259bc</string>
+		<string>d83c7b31-2499-4455-9cc3-028fd0ae3d04</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
 		<key>allowSimple</key>
@@ -64,7 +64,7 @@
 		<key>PayloadType</key>
 		<string>com.apple.loginwindow</string>
 		<key>PayloadUUID</key>
-		<string>d569cc33-1386-42db-a7c1-a3af94ecafcf</string>
+		<string>c0db70bd-052c-4425-a0df-8bdb8b4f6453</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
 		<key>com.apple.login.mcx.DisableAutoLoginClient</key>
@@ -88,15 +88,13 @@
 		<key>PayloadIdentifier</key>
 		<string>com.apple.mdm.filevault2</string>
 		<key>PayloadType</key>
-		<string>com.apple.MCX</string>
+		<string>com.apple.MCX.FileVault2</string>
 		<key>PayloadUUID</key>
-		<string>5c0c9fd1-2d3a-4ac1-9482-fbbcf2ba4dc3</string>
+		<string>50db4cb0-5435-4a35-aa1b-ad1af8f6c70c</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
-		<key>dontAskUserToEnable</key>
-		<true/>
 		<key>Enable</key>
-		<string>On</string>
+		<true/>
 		<key>Defer</key>
 		<true/>
 		<key>DeferForceAtUserLoginMaxBypassAttempts</key>
@@ -104,8 +102,6 @@
 		<key>DeferDontAskAtUserLogout</key>
 		<false/>
 		<key>ShowRecoveryKey</key>
-		<true/>
-		<key>UseRecoveryKey</key>
 		<true/>
 	</dict>
 	<dict>
@@ -116,7 +112,7 @@
 		<key>PayloadType</key>
 		<string>com.apple.systempolicy.control</string>
 		<key>PayloadUUID</key>
-		<string>6dccd157-e8f1-49ac-b49e-346771bfcf82</string>
+		<string>f0005a7b-3093-4ff5-ba0f-f2cc6592c4bf</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
 		<key>EnableAssessment</key>
@@ -132,7 +128,7 @@
 		<key>PayloadType</key>
 		<string>com.apple.systempreferences</string>
 		<key>PayloadUUID</key>
-		<string>1770e9c5-4501-4862-9b15-8837a4a31645</string>
+		<string>e262a46a-b90c-4815-82ab-74b2d813ec23</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
 		<key>DisabledPreferencePanes</key>
@@ -146,17 +142,19 @@
 		<key>PayloadIdentifier</key>
 		<string>com.apple.mdm.remoteaccess</string>
 		<key>PayloadType</key>
-		<string>com.apple.RemoteManagement</string>
+		<string>com.apple.MCX</string>
 		<key>PayloadUUID</key>
-		<string>ea68f99a-126e-4336-a96b-ca4a825ada96</string>
+		<string>7519d9c6-d359-484c-a064-2afd77ac647a</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
-		<key>EnableRemoteLogin</key>
-		<false/>
-		<key>EnableScreenSharing</key>
-		<false/>
-		<key>EnableRemoteManagement</key>
-		<false/>
+		<key>dscl</key>
+		<dict>
+			<key>com.openssh.sshd</key>
+			<dict>
+		<key>Disabled</key>
+		<true/>
+			</dict>
+		</dict>
 	</dict>
 	<dict>
 		<key>PayloadDisplayName</key>
@@ -166,7 +164,7 @@
 		<key>PayloadType</key>
 		<string>com.apple.security.firewall</string>
 		<key>PayloadUUID</key>
-		<string>3a61320c-b29b-4681-aac5-75df5d85270f</string>
+		<string>f1a17390-3538-493c-9d72-d1526867000d</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
 		<key>EnableFirewall</key>
@@ -184,7 +182,7 @@
 		<key>PayloadType</key>
 		<string>com.apple.SoftwareUpdate</string>
 		<key>PayloadUUID</key>
-		<string>4f90a94a-2683-4503-9763-3a22ddfbb2f9</string>
+		<string>d8a359a4-6b02-40ad-9695-cd55913d9ce6</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
 		<key>AutomaticCheckEnabled</key>
@@ -206,7 +204,7 @@
 		<key>PayloadType</key>
 		<string>com.apple.dnsSettings.managed</string>
 		<key>PayloadUUID</key>
-		<string>20ce61c4-6b38-465e-abdf-c1a675b127d3</string>
+		<string>01bbfe60-c584-46b7-8025-289080d1be83</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
 		<key>DNSSettings</key>
@@ -227,7 +225,7 @@
 		<key>PayloadType</key>
 		<string>com.apple.TCC.configuration-profile-policy</string>
 		<key>PayloadUUID</key>
-		<string>03323268-b185-40d8-be75-c4d7c0f37832</string>
+		<string>a3680b37-524d-4064-b75a-26c4e1a2ea33</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
 		<key>Services</key>
@@ -257,35 +255,16 @@
 		<key>PayloadType</key>
 		<string>com.apple.ManagedClient.preferences</string>
 		<key>PayloadUUID</key>
-		<string>653426a0-7603-43d3-8e4f-274d8ca3f214</string>
+		<string>e316f047-c008-4af8-ae81-d400240897bf</string>
 		<key>PayloadVersion</key>
 		<integer>1</integer>
-		<key>PayloadContentManagedPreferences</key>
-		<dict>
-			<key>com.apple.audit</key>
+		<key>Forced</key>
+		<array>
 			<dict>
-				<key>Forced</key>
-				<array>
-					<dict>
 		<key>mcx_preference_settings</key>
-		<string>AuditEnabled</string>
-						<key>AuditEnabled</key>
-						<true/>
-					</dict>
-					<dict>
-		<key>mcx_preference_settings</key>
-		<string>AuditFlags</string>
-						<key>AuditFlags</key>
-						<array>
-			<string>lo</string>
-			<string>aa</string>
-			<string>ad</string>
-			<string>-all</string>
-						</array>
-					</dict>
-				</array>
+		<string>/etc/security/audit_control</string>
 			</dict>
-		</dict>
+		</array>
 	</dict>
 </array>
 </dict>

@@ -76,6 +76,12 @@ system_updates() {
     esac
 }
 
+# Disable telemetry and privacy-invasive services
+disable_telemetry() {
+    source "$MODULES_DIR/system/updates.sh"
+    disable_popularity_contest
+}
+
 # Configure users and groups
 users_groups() {
     source "$MODULES_DIR/access/users.sh"
@@ -188,6 +194,7 @@ run_all_modules() {
     
     system_info
     system_updates
+    disable_telemetry
     users_groups
     ssh_hardening
     firewall_setup
