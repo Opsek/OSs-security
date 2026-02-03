@@ -94,27 +94,41 @@ macOS Security Hardening Script v${SCRIPT_VERSION:-0.1.0}
 
 Usage: sudo $0 [OPTIONS]
 
-OPTIONS:
+HARDENING OPTIONS:
     --paranoid           Enable the 'paranoid' profile (default: recommended)
     --lockdown          Enable Lockdown Mode compatible settings (macOS 13+ only)
     --checks            Run compliance checks after hardening
     --dry-run           Show changes that would be made without applying them
     --yes               Assume yes to all prompts (non-interactive mode)
     --verbose           Show debug output in log
+
+MDM PROFILE GENERATION:
+    --generate-mdm      Generate an MDM profile for installation via System Settings
+    --mdm-profile PROF  Specify MDM profile: basic, recommended (default), paranoid
+    --mdm-output DIR    Output directory for MDM profiles (default: ./mdm_profiles)
+
+GENERAL:
     --help, -h          Show this help
 
-EXAMPLES:
+HARDENING EXAMPLES:
     sudo $0 --verbose
     sudo $0 --dry-run
     sudo $0 --yes --paranoid --lockdown
     sudo $0 --lockdown
     sudo $0 --checks
 
+MDM EXAMPLES:
+    ./main.sh --generate-mdm
+    ./main.sh --generate-mdm --mdm-profile paranoid
+    ./main.sh --generate-mdm --mdm-output ./profiles --mdm-profile paranoid
+
 NOTES:
+    - Hardening script requires root/sudo privileges
     - Lockdown Mode requires macOS 13 (Ventura) or later
     - Lockdown Mode settings may significantly impact web browsing experience
-    - Use --lockdown flag to explicitly enable Lockdown Mode compatible settings
-    - Use --checks flag to run compliance checks after hardening
+    - MDM profiles do NOT require sudo and are installed via System Settings
+    - MDM is the RECOMMENDED approach for macOS hardening on macOS 26+
+    - MDM profiles are maintainable by Apple and persist through upgrades
 
 USAGE
 }

@@ -35,6 +35,8 @@ Review `config/settings.conf` before execution to adjust default policy settings
 
 ![Demo](assets/macos_howto.gif)
 
+### Hardening Configuration (Traditional Approach)
+
 The script provides different security profiles depending on your security needs:
 
 ```bash
@@ -54,13 +56,54 @@ sudo ./main.sh --paranoid
 sudo ./main.sh --lockdown
 ```
 
-### Available profiles
+### MDM Hardening Profile Generation (Recommended for macOS 26+)
 
-| Profile         | Description                                                 |
-| --------------- | ----------------------------------------------------------- |
-| **recommended** | Balanced security for most users                            |
-| **paranoid**    | Maximum hardening for high-risk environments                |
-| **lockdown**    | Activates Lockdown Mode compatible restrictions (macOS 13+) |
+**As of macOS 26, MDM profiles are the recommended approach for hardening.** Apple maintains these policies through system upgrades, making them more sustainable than direct configuration changes.
+
+Generate MDM profiles that can be installed through **System Settings > General > Device Management**:
+
+```bash
+# Generate recommended MDM profile
+./main.sh --generate-mdm
+
+# Generate specific MDM profile (recommended, paranoid)
+./main.sh --generate-mdm --mdm-profile paranoid
+
+# Specify custom output directory
+./main.sh --generate-mdm --mdm-output ~/Desktop/mdm_profiles
+```
+
+**Installation:**
+1. Run the MDM generation command above
+2. Open the generated `.mobileconfig` file (macOS will open System Settings)
+3. Navigate to **Settings > General > Device Management**
+4. Review and click **Install**
+5. Authenticate with your password
+
+**Benefits of MDM Approach:**
+- ✅ Apple-supported and maintained policies
+- ✅ Persists through system upgrades
+- ✅ Easy to modify or remove via System Settings
+- ✅ No need for root/sudo privileges
+- ✅ Recommended by Apple for organizational hardening
+
+
+
+
+![Demo MDM](assets/macos_mdm.gif)
+
+
+
+
+### Available Hardening Profiles
+
+| Profile         | Type       | Description                                                 |
+| --------------- | ---------- | ----------------------------------------------------------- |
+| **recommended** | Traditional| Balanced security for most users                            |
+| **paranoid**    | Traditional| Maximum hardening for high-risk environments                |
+| **lockdown**    | Traditional| Activates Lockdown Mode compatible restrictions (macOS 13+) |                  |
+| **recommended** | MDM        | Balanced security (MDM)                                     |
+| **paranoid**      | MDM        | Comprehensive hardening (MDM)                               |                  |
 
 ---
 
@@ -158,12 +201,16 @@ macos-hardening/
 │   │   ├── services.sh
 │   │   ├── permissions.sh
 │   │   └── users.sh
-│   └── internals/
-│       ├── bluetooth.sh
-│       ├── wifi.sh
-│       ├── lockdown.sh
-│       ├── privacy.sh
-│       └── kernel.sh
+│   ├── internals/
+│   │   ├── bluetooth.sh
+│   │   ├── wifi.sh
+│   │   ├── lockdown.sh
+│   │   ├── privacy.sh
+│   │   └── kernel.sh
+│   └── mdm/
+│       ├── profile_generator.sh
+│       ├── policies.sh
+│       └── README.md
 ├── utils/
 │   ├── common.sh
 │   ├── logging.sh
