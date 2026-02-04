@@ -105,7 +105,6 @@ HARDENING OPTIONS:
 MDM PROFILE GENERATION:
     --generate-mdm      Generate an MDM profile for installation via System Settings
     --mdm-profile PROF  Specify MDM profile: basic, recommended (default), paranoid
-    --mdm-output DIR    Output directory for MDM profiles (default: ./mdm_profiles)
 
 GENERAL:
     --help, -h          Show this help
@@ -120,7 +119,6 @@ HARDENING EXAMPLES:
 MDM EXAMPLES:
     ./main.sh --generate-mdm
     ./main.sh --generate-mdm --mdm-profile paranoid
-    ./main.sh --generate-mdm --mdm-output ./profiles --mdm-profile paranoid
 
 NOTES:
     - Hardening script requires root/sudo privileges
