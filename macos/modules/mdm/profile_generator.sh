@@ -47,7 +47,7 @@ create_profile_footer() {
     <key>PayloadDescription</key>
     <string>macOS Security Hardening Profile - ${profile_type}</string>
     <key>PayloadDisplayName</key>
-    <string>Security Hardening - ${profile_type}</string>
+    <string>OPSEK - Security Hardening - ${profile_type}</string>
     <key>PayloadIdentifier</key>
     <string>com.security.hardening.${profile_type}.${profile_uuid}</string>
     <key>PayloadOrganization</key>
@@ -72,28 +72,18 @@ generate_recommended_profile() {
     local output_file="$1"
     local profile_uuid="$(generate_uuid)"
     local timestamp="$(get_timestamp)"
-    
+
     {
         create_profile_header "recommended" "$profile_uuid" "$timestamp"
-        add_password_policy "recommended" 12 2 5
+
+        add_password_policy 12 1 5
         add_screensaver_policy 600
         add_filevault_policy
-        add_firewall_policy "true"
-        add_gatekeeper_policy "true"
-        add_guest_account_policy
-        add_update_policy "true" "true" "true"
-        add_autologin_policy
-        add_gatekeeper_strict_policy
-        add_custom_dns_policy "1.1.1.1" "1.0.0.1"
-        add_safari_hardening_policy
-        add_security_updates_policy
-        add_log_retention_policy 90
-        add_unified_logging_policy
-        add_airdrop_policy
+        add_firewall_policy "false"
+        add_gatekeeper_policy
+        add_updates_policy
+        add_loginwindow_policy
         add_ssh_policy
-        add_screen_sharing_policy
-        add_remote_management_policy
-        add_remote_apple_events_policy
         create_profile_footer "recommended" "$profile_uuid" "$timestamp"
     } > "$output_file"
 }
@@ -103,42 +93,27 @@ generate_paranoid_profile() {
     local output_file="$1"
     local profile_uuid="$(generate_uuid)"
     local timestamp="$(get_timestamp)"
-    
+
     {
         create_profile_header "paranoid" "$profile_uuid" "$timestamp"
-        add_password_policy "paranoid" 16 4 3
-        add_screensaver_policy 300
+
+        add_password_policy 16 2 3
+        add_screensaver_policy 60
         add_filevault_policy
         add_firewall_policy "true"
-        add_gatekeeper_policy "false"
-        add_guest_account_policy
-        add_update_policy "true" "true" "true"
-        add_bluetooth_policy
-        add_airdrop_policy
+        add_gatekeeper_policy
+        add_updates_policy
+
+        add_loginwindow_policy
         add_autologin_policy
-        add_screen_recording_policy
-        add_microphone_policy
-        add_camera_policy
-        add_location_policy
-        add_gatekeeper_strict_policy
-        add_code_signature_policy
-        add_custom_dns_policy "1.1.1.1" "1.0.0.1"
-        add_safari_hardening_policy
-        add_content_filtering_policy
-        add_security_updates_policy
-        add_system_auditing_policy
-        add_log_retention_policy 180
-        add_unified_logging_policy
-        add_apple_intelligence_policy
-        add_siri_policy
-        add_handoff_policy
-        add_icloud_restrictions_policy
         add_ssh_policy
-        add_screen_sharing_policy
-        add_remote_management_policy
-        add_remote_apple_events_policy
-        add_file_sharing_policy
-        add_printer_sharing_policy
+
+        add_core_restrictions_policy
+        add_remote_access_policy
+        add_safari_policy
+        add_dns_policy
+        add_sharing_restrictions_policy
+
         create_profile_footer "paranoid" "$profile_uuid" "$timestamp"
     } > "$output_file"
 }
