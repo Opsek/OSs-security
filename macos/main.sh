@@ -130,8 +130,6 @@ while [[ ${#} -gt 0 ]]; do
         --verbose) VERBOSE=true; shift ;;
         --generate-mdm) GENERATE_MDM=true; shift ;;
         --mdm-profile) MDM_PROFILE="$2"; shift 2 ;;
-        --mdm-output) MDM_OUTPUT_DIR="$2"; shift 2 ;;
-        --mdm-all) GENERATE_MDM=true; MDM_PROFILE="all"; shift ;;
         --help) show_help; exit 0 ;;
         -h) show_help; exit 0 ;;
         *) error "Unknown option: $1"; show_help; exit 1 ;;
