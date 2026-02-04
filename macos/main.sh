@@ -175,13 +175,7 @@ main() {
             *) error "Invalid MDM profile: $MDM_PROFILE (use: recommended, paranoid)"; exit 1 ;;
         esac
         
-        local mdm_file=$(generate_mdm_profile "$MDM_PROFILE" "$MDM_OUTPUT_DIR")
-        echo "✓ Profile generated: $mdm_file"
-        echo
-        
-        validate_profile_file "$mdm_file"
-        profile_summary "$mdm_file"
-        show_mdm_installation_instructions "$mdm_file"
+        generate_mdm_profile "$MDM_PROFILE"
         
         exit 1
     fi

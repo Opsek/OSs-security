@@ -79,3 +79,41 @@ update_rhel_system() {
     log_info "System update completed"
 }
 
+disable_popularity_contest() {
+    log_info "Disabling popularity-contest package (telemetry service)"
+    
+    # Only applicable to Debian/Ubuntu-based distributions
+    if [[ "$PLATFORM_FAMILY" != "debian" ]]; then
+        log_info "Not a Debian/Ubuntu system; skipping popularity-contest disabling"
+        return 0
+    fi
+
+    if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
+        log_info "[dry-run] Check if popularity-contest is installed"
+        log_info "[dry-run] Remove popularity-contest package"
+        log_info "[dry-run] Prevent popularity-contest from being auto-installed"
+        return 0
+    fi
+
+    # Check if popularity-contest is installed
+    if dpkg -l | grep -q "^ii.*popularity-contest"; then
+        log_info "Removing popularity-contest package..."
+        if ! apt-get remove -y popularity-contest 2>/dev/null; then
+            log_warn "Failed to remove popularity-contest package"
+            return 1
+        fi
+        log_info "popularity-contest package removed successfully"
+    else
+        log_info "popularity-contest package is not installed"
+    fi
+
+    # Prevent it from being automatically installed by adding to apt hold list
+    log_info "Adding popularity-contest to apt hold list to prevent auto-installation..."
+    if ! apt-mark hold popularity-contest 2>/dev/null; then
+        log_warn "Could not add popularity-contest to hold list (package may not exist in repos)"
+    fi
+
+    log_info "popularity-contest telemetry service disabled"
+    return 0
+}
+

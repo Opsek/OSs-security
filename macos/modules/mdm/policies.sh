@@ -1,351 +1,832 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# ==============================================================================
-# MDM Module - Policy Definitions and Payload Generators
-# ==============================================================================
-# This module defines hardened MDM policies and provides functions to generate
-# .mobileconfig (Apple Configuration Profile) payloads that can be installed
-# through System Settings > General > Device Management
-#
-# MDM profiles are superior to direct configuration because:
-#   - Supported and maintained by Apple
-#   - Persist through system upgrades
-#   - Easy to modify or remove via System Settings
-#   - Part of officially recommended security practices
-# ==============================================================================
+# MDM Policies for macOS Hardening
+# This file contains all policy generation functions
 
-set -euo pipefail
-
-# ==============================================================================
-# UTILITY FUNCTIONS FOR XML GENERATION
-# ==============================================================================
-
-# Encode string for XML/plist
-xml_encode() {
-    local input="$1"
-    input="${input//&/&amp;}"
-    input="${input//</&lt;}"
-    input="${input//>/&gt;}"
-    input="${input//\"/&quot;}"
-    input="${input//\'/&apos;}"
-    echo "$input"
+# Configure password policy
+add_password_policy() {
+    local profile_type="$1"
+    local min_length="$2"
+    local min_complex="$3"
+    local max_failed="$4"
+    
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.mobiledevice.passwordpolicy</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.password.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Password Policy</string>
+            <key>allowSimple</key>
+            <false/>
+            <key>forcePIN</key>
+            <true/>
+            <key>maxFailedAttempts</key>
+            <integer>${max_failed}</integer>
+            <key>maxPINAgeInDays</key>
+            <integer>90</integer>
+            <key>minComplexChars</key>
+            <integer>${min_complex}</integer>
+            <key>minLength</key>
+            <integer>${min_length}</integer>
+            <key>requireAlphanumeric</key>
+            <true/>
+        </dict>
+EOF
 }
 
-# Generate plist dict entry
-plist_dict_begin() {
-    echo "	<dict>"
-
+# Configure screensaver/lock screen
+add_screensaver_policy() {
+    local idle_time="$1"
+    
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.screensaver</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.screensaver.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Screensaver Policy</string>
+            <key>askForPassword</key>
+            <true/>
+            <key>askForPasswordDelay</key>
+            <integer>0</integer>
+            <key>idleTime</key>
+            <integer>${idle_time}</integer>
+        </dict>
+EOF
 }
 
-plist_dict_end() {
-    echo "	</dict>"
+# Configure FileVault encryption
+add_filevault_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX.FileVault2</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.filevault.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>FileVault Configuration</string>
+            <key>Enable</key>
+            <string>On</string>
+            <key>Defer</key>
+            <false/>
+            <key>UseRecoveryKey</key>
+            <true/>
+            <key>ShowRecoveryKey</key>
+            <false/>
+        </dict>
+EOF
 }
 
-# Generate plist key-value pair (string)
-plist_string() {
-    local key="$1"
-    local value="$2"
-    value=$(xml_encode "$value")
-    echo "		<key>$key</key>"
-    echo "		<string>$value</string>"
+# Configure firewall
+add_firewall_policy() {
+    local stealth_mode="$1"
+    
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.security.firewall</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.firewall.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Firewall Configuration</string>
+            <key>EnableFirewall</key>
+            <true/>
+            <key>BlockAllIncoming</key>
+            <false/>
+            <key>EnableStealthMode</key>
+            <${stealth_mode}/>
+        </dict>
+EOF
 }
 
-# Generate plist key-value pair (bool)
-plist_bool() {
-    local key="$1"
-    local value="$2"
-    local bool_value="true"
-    [[ "$value" != "true" ]] && bool_value="false"
-    echo "		<key>$key</key>"
-    echo "		<$bool_value/>"
+# Configure Gatekeeper
+add_gatekeeper_policy() {
+    local allowed_source="$1"
+    
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.systempolicy.control</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.gatekeeper.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Gatekeeper Configuration</string>
+            <key>EnableAssessment</key>
+            <true/>
+            <key>AllowIdentifiedDevelopers</key>
+            <${allowed_source}/>
+        </dict>
+EOF
 }
 
-# Generate plist key-value pair (integer)
-plist_integer() {
-    local key="$1"
-    local value="$2"
-    echo "		<key>$key</key>"
-    echo "		<integer>$value</integer>"
+# Disable guest account
+add_guest_account_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.guest.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Guest Account Policy</string>
+            <key>DisableGuestAccount</key>
+            <true/>
+        </dict>
+EOF
 }
 
-# Generate plist array
-plist_array_begin() {
-    local key="$1"
-    echo "		<key>$key</key>"
-    echo "		<array>"
+# Configure automatic updates
+add_update_policy() {
+    local auto_check="$1"
+    local auto_download="$2"
+    local auto_install="$3"
+    
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.SoftwareUpdate</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.updates.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Software Update Policy</string>
+            <key>AutomaticCheckEnabled</key>
+            <${auto_check}/>
+            <key>AutomaticDownload</key>
+            <${auto_download}/>
+            <key>ConfigDataInstall</key>
+            <${auto_install}/>
+            <key>CriticalUpdateInstall</key>
+            <${auto_install}/>
+        </dict>
+EOF
 }
 
-plist_array_end() {
-    echo "		</array>"
+# Disable Bluetooth (paranoid mode)
+add_bluetooth_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCXBluetooth</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.bluetooth.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Bluetooth Policy</string>
+            <key>DisableBluetooth</key>
+            <true/>
+        </dict>
+EOF
 }
 
-# Generate plist array string element
-plist_array_string() {
-    local value="$1"
-    value=$(xml_encode "$value")
-    echo "			<string>$value</string>"
+# Disable AirDrop (paranoid mode)
+add_airdrop_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.applicationaccess</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.airdrop.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>AirDrop Policy</string>
+            <key>allowAirDrop</key>
+            <false/>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# PASSWORD POLICY PAYLOAD (FIXED)
-# ==============================================================================
-
-generate_password_policy_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "Password Policy"
-    plist_string "PayloadIdentifier" "com.apple.mdm.passwordpolicy"
-    plist_string "PayloadType" "com.apple.mobiledevice.passwordpolicy"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
-    
-    # Password requirements
-    plist_bool "allowSimple" "false"
-    plist_bool "forcePIN" "true"
-    plist_integer "maxFailedAttempts" "10"
-    plist_integer "maxInactivity" "900"  # 15 minutes
-    plist_integer "maxPINAgeInDays" "90"
-    plist_integer "minComplexChars" "1"
-    plist_integer "minLength" "12"
-    plist_integer "minutesUntilFailedLoginReset" "15"
-    plist_integer "pinHistory" "5"
-    plist_bool "requireAlphanumeric" "true"
-    
-    echo "	</dict>"
+# Disable automatic login
+add_autologin_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.loginwindow</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.autologin.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Automatic Login Policy</string>
+            <key>com.apple.login.mcx.DisableAutoLoginClient</key>
+            <true/>
+            <key>DisableFDEAutoLogin</key>
+            <true/>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# LOGIN POLICY PAYLOAD (FIXED)
-# ==============================================================================
-
-generate_login_policy_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "Login Window Policy"
-    plist_string "PayloadIdentifier" "com.apple.mdm.loginwindow"
-    plist_string "PayloadType" "com.apple.loginwindow"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
-    
-    # Disable automatic login
-    plist_bool "com.apple.login.mcx.DisableAutoLoginClient" "true"
-    
-    # Show name and password fields
-    plist_bool "SHOWFULLNAME" "true"
-    
-    # Hide sleep, restart, and shutdown buttons
-    plist_bool "PowerOffDisabled" "true"
-    plist_bool "RestartDisabled" "true"
-    plist_bool "ShutDownDisabled" "true"
-    
-    # Disable guest account
-    plist_bool "DisableGuestAccount" "true"
-    
-    # Show input menu (language/keyboard selector)
-    plist_bool "showInputMenu" "true"
-    
-    echo "	</dict>"
+# Harden privacy preferences - Screen Recording
+add_screen_recording_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.TCC.configuration-profile-policy</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.screenrecording.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Screen Recording Privacy Policy</string>
+            <key>Services</key>
+            <dict>
+                <key>ScreenCapture</key>
+                <array>
+                    <dict>
+                        <key>Allowed</key>
+                        <false/>
+                        <key>CodeRequirement</key>
+                        <string>identifier "com.apple.screencapture" and anchor apple</string>
+                    </dict>
+                </array>
+            </dict>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# SECURITY & PRIVACY PAYLOAD (FIXED)
-# ==============================================================================
-
-generate_security_privacy_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "Security & Privacy Settings"
-    plist_string "PayloadIdentifier" "com.apple.mdm.securityprivacy"
-    plist_string "PayloadType" "com.apple.security.firewall"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
-    
-    # Enable firewall
-    plist_bool "EnableFirewall" "true"
-    plist_bool "BlockAllIncoming" "false"
-    plist_bool "EnableStealthMode" "true"
-    
-    echo "	</dict>"
+# Harden privacy preferences - Microphone
+add_microphone_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.TCC.configuration-profile-policy</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.microphone.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Microphone Privacy Policy</string>
+            <key>Services</key>
+            <dict>
+                <key>Microphone</key>
+                <array>
+                    <dict>
+                        <key>Allowed</key>
+                        <false/>
+                        <key>CodeRequirement</key>
+                        <string>identifier "com.apple.audio" and anchor apple</string>
+                    </dict>
+                </array>
+            </dict>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# RESTRICTIONS PAYLOAD (FIXED - macOS specific)
-# ==============================================================================
-
-generate_restrictions_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "System Restrictions"
-    plist_string "PayloadIdentifier" "com.apple.mdm.restrictions"
-    plist_string "PayloadType" "com.apple.systempreferences"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
-    
-    # Disabled preference panes
-    plist_array_begin "DisabledPreferencePanes"
-    plist_array_string "com.apple.preferences.sharing"
-    plist_array_end
-    
-    echo "	</dict>"
+# Harden privacy preferences - Camera
+add_camera_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.TCC.configuration-profile-policy</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.camera.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Camera Privacy Policy</string>
+            <key>Services</key>
+            <dict>
+                <key>Camera</key>
+                <array>
+                    <dict>
+                        <key>Allowed</key>
+                        <false/>
+                        <key>CodeRequirement</key>
+                        <string>identifier "com.apple.camera" and anchor apple</string>
+                    </dict>
+                </array>
+            </dict>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# REMOTE ACCESS RESTRICTIONS PAYLOAD (NEW - Separate from general restrictions)
-# ==============================================================================
-
-generate_remote_access_restrictions_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "Remote Access Restrictions"
-    plist_string "PayloadIdentifier" "com.apple.mdm.remoteaccess"
-    plist_string "PayloadType" "com.apple.MCX"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
-    
-    # Disable SSH
-    echo "		<key>dscl</key>"
-    echo "		<dict>"
-    echo "			<key>com.openssh.sshd</key>"
-    echo "			<dict>"
-    plist_bool "Disabled" "true"
-    echo "			</dict>"
-    echo "		</dict>"
-    
-    echo "	</dict>"
+# Harden privacy preferences - Location Services
+add_location_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.location.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Location Services Policy</string>
+            <key>DisableLocationServices</key>
+            <true/>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# FILEVAULT PAYLOAD (FIXED)
-# ==============================================================================
-
-generate_filevault_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "FileVault Full Disk Encryption"
-    plist_string "PayloadIdentifier" "com.apple.mdm.filevault2"
-    plist_string "PayloadType" "com.apple.MCX.FileVault2"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
-
-    plist_bool "Enable" "true"
-    plist_bool "Defer" "true"
-    plist_integer "DeferForceAtUserLoginMaxBypassAttempts" "3"
-    plist_bool "DeferDontAskAtUserLogout" "false"
-    plist_bool "ShowRecoveryKey" "true"
-
-    echo "	</dict>"
+# Enhanced Gatekeeper - Enforce signed applications only
+add_gatekeeper_strict_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.systempolicy.control</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.gatekeeper.strict.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Gatekeeper Strict Policy</string>
+            <key>EnableAssessment</key>
+            <true/>
+            <key>AllowIdentifiedDevelopers</key>
+            <false/>
+            <key>DisableOverride</key>
+            <true/>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# GATEKEEPER PAYLOAD (FIXED)
-# ==============================================================================
-
-generate_gatekeeper_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "Gatekeeper & System Integrity"
-    plist_string "PayloadIdentifier" "com.apple.mdm.gatekeeper"
-    plist_string "PayloadType" "com.apple.systempolicy.control"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
-
-    plist_bool "EnableAssessment" "true"
-    plist_bool "AllowIdentifiedDevelopers" "true"
-
-    echo "	</dict>"
+# Enforce application signatures and notarization
+add_code_signature_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.systempolicy.managed</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.codesign.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Code Signature Enforcement</string>
+            <key>DisableLibraryValidation</key>
+            <false/>
+            <key>RequireNotarization</key>
+            <true/>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# SYSTEM UPDATES PAYLOAD (FIXED)
-# ==============================================================================
-
-generate_updates_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "Automatic System Updates"
-    plist_string "PayloadIdentifier" "com.apple.mdm.softwareupdate"
-    plist_string "PayloadType" "com.apple.SoftwareUpdate"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
+# Configure Custom DNS Settings
+add_custom_dns_policy() {
+    local dns_primary="$1"
+    local dns_secondary="$2"
     
-    # Automatic update settings
-    plist_bool "AutomaticCheckEnabled" "true"
-    plist_bool "AutomaticDownload" "true"
-    plist_bool "AutomaticallyInstallMacOSUpdates" "true"
-    plist_bool "CriticalUpdateInstall" "true"
-    plist_bool "ConfigDataInstall" "true"
-    
-    echo "	</dict>"
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.dnsSettings.managed</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.dns.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Custom DNS Configuration</string>
+            <key>DNSSettings</key>
+            <dict>
+                <key>DNSProtocol</key>
+                <string>HTTPS</string>
+                <key>ServerAddresses</key>
+                <array>
+                    <string>${dns_primary}</string>
+                    <string>${dns_secondary}</string>
+                </array>
+            </dict>
+            <key>ProhibitDisablement</key>
+            <true/>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# DNS & NETWORK SECURITY PAYLOAD (FIXED)
-# ==============================================================================
-
-generate_dns_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "Encrypted DNS Settings"
-    plist_string "PayloadIdentifier" "com.apple.mdm.dns"
-    plist_string "PayloadType" "com.apple.dnsSettings.managed"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
-    
-    # DNS Settings
-    echo "		<key>DNSSettings</key>"
-    echo "		<dict>"
-    plist_string "DNSProtocol" "HTTPS"
-    plist_string "ServerURL" "https://cloudflare-dns.com/dns-query"
-    echo "		</dict>"
-    
-    # Prohibit disabling
-    plist_bool "ProhibitDisablement" "true"
-    
-    echo "	</dict>"
+# Harden Safari Browser
+add_safari_hardening_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.Safari</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.safari.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Safari Security Hardening</string>
+            <key>AutoFillPasswords</key>
+            <false/>
+            <key>AutoFillCreditCardData</key>
+            <false/>
+            <key>AutoOpenSafeDownloads</key>
+            <false/>
+            <key>BlockStoragePolicy</key>
+            <integer>2</integer>
+            <key>SendDoNotTrackHTTPHeader</key>
+            <true/>
+            <key>WarnAboutFraudulentWebsites</key>
+            <true/>
+            <key>WebKitJavaScriptCanOpenWindowsAutomatically</key>
+            <false/>
+            <key>com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaScriptEnabled</key>
+            <true/>
+            <key>com.apple.Safari.ContentPageGroupIdentifier.WebKit2PluginsEnabled</key>
+            <false/>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# PRIVACY PREFERENCES PAYLOAD (FIXED - TCC)
-# ==============================================================================
-
-generate_privacy_preferences_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "Privacy Preferences Policy Control"
-    plist_string "PayloadIdentifier" "com.apple.mdm.privacy.tcc"
-    plist_string "PayloadType" "com.apple.TCC.configuration-profile-policy"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
-    
-    # Services configuration
-    echo "		<key>Services</key>"
-    echo "		<dict>"
-    
-    # Screen Recording - Deny all by default
-    echo "			<key>ScreenCapture</key>"
-    echo "			<array>"
-    echo "				<dict>"
-    plist_string "Identifier" "com.apple.screensharing.agent"
-    plist_string "IdentifierType" "bundleID"
-    plist_string "CodeRequirement" "identifier \"com.apple.screensharing.agent\" and anchor apple"
-    plist_bool "Allowed" "false"
-    plist_string "Comment" "Deny screen recording by default"
-    echo "				</dict>"
-    echo "			</array>"
-    
-    echo "		</dict>"
-    echo "	</dict>"
+# Enforce Content Filtering
+add_content_filtering_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.webcontent-filter</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.contentfilter.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Content Filtering Policy</string>
+            <key>FilterType</key>
+            <string>Plugin</string>
+            <key>AutoFilterEnabled</key>
+            <true/>
+            <key>PermittedURLs</key>
+            <array/>
+            <key>BlacklistedURLs</key>
+            <array>
+                <string>*.torrent</string>
+                <string>*.onion</string>
+            </array>
+        </dict>
+EOF
 }
 
-# ==============================================================================
-# AUDIT & LOGGING PAYLOAD (IMPROVED)
-# ==============================================================================
+# Enforce Automated Security Updates
+add_security_updates_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.SoftwareUpdate</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.securityupdates.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Automated Security Updates</string>
+            <key>AutomaticCheckEnabled</key>
+            <true/>
+            <key>AutomaticDownload</key>
+            <true/>
+            <key>AutomaticallyInstallMacOSUpdates</key>
+            <true/>
+            <key>ConfigDataInstall</key>
+            <true/>
+            <key>CriticalUpdateInstall</key>
+            <true/>
+            <key>AutomaticSecurityUpdatesEnabled</key>
+            <true/>
+        </dict>
+EOF
+}
 
-generate_audit_logging_payload() {
-    echo "	<dict>"
-    plist_string "PayloadDisplayName" "Security Audit Configuration"
-    plist_string "PayloadIdentifier" "com.apple.mdm.audit"
-    plist_string "PayloadType" "com.apple.ManagedClient.preferences"
-    plist_string "PayloadUUID" "$(uuidgen | tr '[:upper:]' '[:lower:]')"
-    plist_integer "PayloadVersion" "1"
+# Configure System Auditing
+add_system_auditing_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.systemuiserver</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.auditing.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>System Auditing Configuration</string>
+            <key>AuditEnabled</key>
+            <true/>
+            <key>LogAuthenticationEvents</key>
+            <true/>
+            <key>LogFileAccessEvents</key>
+            <true/>
+            <key>LogNetworkEvents</key>
+            <true/>
+        </dict>
+EOF
+}
+
+# Configure Log Retention
+add_log_retention_policy() {
+    local retention_days="$1"
     
-    # Enable audit daemon
-    echo "		<key>Forced</key>"
-    echo "		<array>"
-    echo "			<dict>"
-    plist_string "mcx_preference_settings" "/etc/security/audit_control"
-    echo "			</dict>"
-    echo "		</array>"
-    
-    echo "	</dict>"
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.systemlog</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.logretention.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Log Retention Policy</string>
+            <key>Enable-Private-Data</key>
+            <true/>
+            <key>TTL</key>
+            <dict>
+                <key>Default</key>
+                <integer>${retention_days}</integer>
+                <key>System</key>
+                <integer>${retention_days}</integer>
+                <key>Security</key>
+                <integer>${retention_days}</integer>
+            </dict>
+        </dict>
+EOF
+}
+
+# Configure Unified Logging System
+add_unified_logging_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.osanalytics</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.logging.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Unified Logging Configuration</string>
+            <key>LogAuthenticationEvents</key>
+            <true/>
+            <key>LogPrivilegedOperations</key>
+            <true/>
+            <key>LogSecurityEvents</key>
+            <true/>
+        </dict>
+EOF
+}
+
+# Disable Apple Intelligence features
+add_apple_intelligence_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.applicationaccess</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.appleintelligence.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Apple Intelligence Restrictions</string>
+            <key>allowAssistant</key>
+            <false/>
+            <key>allowAssistantWhileLocked</key>
+            <false/>
+            <key>allowDictation</key>
+            <false/>
+            <key>forceAssistantProfanityFilter</key>
+            <true/>
+        </dict>
+EOF
+}
+
+# Disable Siri
+add_siri_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.ironwood.support</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.siri.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Siri Restrictions</string>
+            <key>Ironwood Allowed</key>
+            <false/>
+        </dict>
+EOF
+}
+
+# Disable Handoff
+add_handoff_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.applicationaccess</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.handoff.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Handoff Restrictions</string>
+            <key>allowActivityContinuation</key>
+            <false/>
+        </dict>
+EOF
+}
+
+# Disable iCloud features
+add_icloud_restrictions_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.applicationaccess</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.icloud.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>iCloud Restrictions</string>
+            <key>allowCloudDocumentSync</key>
+            <false/>
+            <key>allowCloudKeychainSync</key>
+            <false/>
+            <key>allowCloudPhotoLibrary</key>
+            <false/>
+            <key>allowCloudPrivateRelay</key>
+            <false/>
+        </dict>
+EOF
+}
+
+# Disable SSH (Remote Login)
+add_ssh_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.ssh.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>SSH Remote Login Policy</string>
+            <key>DisableRemoteLogin</key>
+            <true/>
+        </dict>
+EOF
+}
+
+# Disable Screen Sharing (VNC)
+add_screen_sharing_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.screensharing.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Screen Sharing Policy</string>
+            <key>DisableScreenSharing</key>
+            <true/>
+        </dict>
+EOF
+}
+
+# Disable Remote Management (ARD)
+add_remote_management_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.RemoteManagement</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.ard.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Remote Management Policy</string>
+            <key>DisableRemoteManagement</key>
+            <true/>
+        </dict>
+EOF
+}
+
+# Disable Remote Apple Events
+add_remote_apple_events_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.appleevents.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Remote Apple Events Policy</string>
+            <key>DisableRemoteAppleEvents</key>
+            <true/>
+        </dict>
+EOF
+}
+
+# Disable File Sharing
+add_file_sharing_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.filesharing.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>File Sharing Policy</string>
+            <key>DisableFileSharing</key>
+            <true/>
+        </dict>
+EOF
+}
+
+# Disable Printer Sharing
+add_printer_sharing_policy() {
+    cat << EOF
+        <dict>
+            <key>PayloadType</key>
+            <string>com.apple.MCX</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>PayloadIdentifier</key>
+            <string>com.security.hardening.printersharing.$(generate_uuid)</string>
+            <key>PayloadUUID</key>
+            <string>$(generate_uuid)</string>
+            <key>PayloadDisplayName</key>
+            <string>Printer Sharing Policy</string>
+            <key>DisablePrinterSharing</key>
+            <true/>
+        </dict>
+EOF
 }
