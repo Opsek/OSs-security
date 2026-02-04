@@ -31,11 +31,10 @@ Review `config/settings.conf` before execution to adjust default policy settings
 
 ---
 
-## 🚀 Usage
+## 🚀 Hardening Configuration (Traditional Approach)
 
-![Demo](assets/macos_howto.gif)
 
-### Hardening Configuration (Traditional Approach)
+### 🚀 Usage
 
 The script provides different security profiles depending on your security needs:
 
@@ -56,43 +55,7 @@ sudo ./main.sh --paranoid
 sudo ./main.sh --lockdown
 ```
 
-### MDM Hardening Profile Generation (Recommended for macOS 26+)
-
-**As of macOS 26, MDM profiles are the recommended approach for hardening.** Apple maintains these policies through system upgrades, making them more sustainable than direct configuration changes.
-
-Generate MDM profiles that can be installed through **System Settings > General > Device Management**:
-
-```bash
-# Generate recommended MDM profile
-./main.sh --generate-mdm
-
-# Generate specific MDM profile (recommended, paranoid)
-./main.sh --generate-mdm --mdm-profile paranoid
-
-# Specify custom output directory
-./main.sh --generate-mdm --mdm-output ~/Desktop/mdm_profiles
-```
-
-**Installation:**
-1. Run the MDM generation command above
-2. Open the generated `.mobileconfig` file (macOS will open System Settings)
-3. Navigate to **Settings > General > Device Management**
-4. Review and click **Install**
-5. Authenticate with your password
-
-**Benefits of MDM Approach:**
-- ✅ Apple-supported and maintained policies
-- ✅ Persists through system upgrades
-- ✅ Easy to modify or remove via System Settings
-- ✅ No need for root/sudo privileges
-- ✅ Recommended by Apple for organizational hardening
-
-
-
-
-![Demo MDM](assets/macos_mdm.gif)
-
-
+![Demo](assets/macos_howto.gif)
 
 
 ### Available Hardening Profiles
@@ -101,15 +64,14 @@ Generate MDM profiles that can be installed through **System Settings > General 
 | --------------- | ---------- | ----------------------------------------------------------- |
 | **recommended** | Traditional| Balanced security for most users                            |
 | **paranoid**    | Traditional| Maximum hardening for high-risk environments                |
-| **lockdown**    | Traditional| Activates Lockdown Mode compatible restrictions (macOS 13+) |                  |
-| **recommended** | MDM        | Balanced security (MDM)                                     |
-| **paranoid**      | MDM        | Comprehensive hardening (MDM)                               |                  |
+| **lockdown**    | Traditional| Activates Lockdown Mode compatible restrictions (macOS 13+) |
+
 
 ---
 
-## 🔧 Hardening Capabilities
+### 🔧 Hardening Capabilities (Traditional)
 
-### 🖥️ System Security
+#### 🖥️ System Security
 
 | Command                    | What we do                         | What it protects                               |
 | -------------------------- | ---------------------------------- | ---------------------------------------------- |
@@ -122,7 +84,7 @@ Generate MDM profiles that can be installed through **System Settings > General 
 
 ---
 
-### 🌐 Network Security
+#### 🌐 Network Security
 
 | Command                       | What we do                           | What it protects                   |
 | ----------------------------- | ------------------------------------ | ---------------------------------- |
@@ -135,7 +97,7 @@ Generate MDM profiles that can be installed through **System Settings > General 
 
 ---
 
-### 🔐 Access Control
+#### 🔐 Access Control
 
 | Command                      | What we do                       | What it protects                          |
 | ---------------------------- | -------------------------------- | ----------------------------------------- |
@@ -149,7 +111,7 @@ Generate MDM profiles that can be installed through **System Settings > General 
 
 ---
 
-### 🧭 Privacy & Data Protection
+#### 🧭 Privacy & Data Protection
 
 > ⚠️ **FileVault must be enabled manually** (System Settings → Privacy & Security → FileVault)
 
@@ -163,7 +125,7 @@ Generate MDM profiles that can be installed through **System Settings > General 
 
 ---
 
-### 🧩 Lockdown Mode Protection (macOS 13+)
+#### 🧩 Lockdown Mode Protection (macOS 13+)
 
 Specialized configuration for environments facing highly targeted attacks.
 
@@ -182,6 +144,78 @@ This includes:
 
 > ⚠️ When using `--lockdown`, **complete Lockdown Mode still must be manually activated**:
 > **System Settings → Privacy & Security → Lockdown Mode → Turn On…**
+
+---
+
+
+## MDM Hardening Profile Generation (Recommended for macOS 26+)
+
+**As of macOS 26, MDM profiles are the recommended approach for hardening.** Apple maintains these policies through system upgrades, making them more sustainable than direct configuration changes.
+
+### 🚀 Usage
+
+Generate MDM profiles that can be installed through **System Settings > General > Device Management**:
+
+```bash
+# Generate recommended MDM profile
+./main.sh --generate-mdm
+
+# Generate specific MDM profile (recommended, paranoid)
+./main.sh --generate-mdm --mdm-profile paranoid
+```
+
+**Installation:**
+1. Run the MDM generation command above
+2. Open the generated `.mobileconfig` file (macOS will open System Settings)
+3. Navigate to **Settings > General > Device Management**
+4. Review and click **Install**
+5. Authenticate with your password
+
+**Benefits of MDM Approach:**
+- ✅ Apple-supported and maintained policies
+- ✅ Persists through system upgrades
+- ✅ Easy to modify or remove via System Settings
+- ✅ No need for root/sudo privileges
+- ✅ Recommended by Apple for organizational hardening
+
+
+![Demo MDM](assets/macos_mdm.gif)
+
+
+While not all configurations implemented by the current iteration of hardening scripts can be covered by MDM profiles, this can help provide a baseline security posture that most critically is supported by Apple, will be maintained through system upgrades and is trivial to later perform policy changes.
+
+
+
+### 🔧 Hardening Capabilities (MDM)
+
+#### Recommended Profile
+
+| Policy                   | What we do                              | What it protects                      |
+| ------------------------ | --------------------------------------- | ------------------------------------- |
+| **Password Policy**      | Min 12 chars, 1 complex, 5 fail lockout | Weak credential attacks               |
+| **Screen Lock**          | Lock screen after 600 seconds (10 min)  | Unauthorized physical access          |
+| **FileVault**            | Enforce disk encryption                 | Prevents data theft from lost drives  |
+| **Firewall**             | Enable with stealth mode off            | Blocks unauthorized network access    |
+| **Gatekeeper**           | Strict app validation required          | Blocks malicious unsigned apps        |
+| **Auto Updates**         | Enable critical & security updates      | Closes known vulnerabilities          |
+| **Login Window**         | Disable guest account & FDE auto-login  | Prevents anonymous access             |
+| **SSH**                  | Disable remote SSH access               | Prevents remote code execution        |
+
+#### Paranoid Profile
+
+All **Recommended** policies **plus:**
+
+| Policy                        | What we do                              | What it protects                                   |
+| ----------------------------- | --------------------------------------- | -------------------------------------------------- |
+| **Password Policy**           | Min 16 chars, 2 complex, 3 fail lockout | Extremely strong credential enforcement            |
+| **Screen Lock**               | Lock screen after 60 seconds (1 min)    | Immediate protection against physical access      |
+| **Firewall**                  | Enable with stealth mode ON             | Hides system from network reconnaissance           |
+| **Auto-Login Disable**        | Prevent any automatic login             | Forces password authentication on every boot       |
+| **Core Restrictions**         | Disable AirDrop, Bluetooth mods, Siri   | Blocks lateral movement & unauthorized features   |
+| **Remote Access Block**       | Disable screen sharing & remote events  | Prevents remote control & AppleScript abuse        |
+| **Safari Hardening**          | Disable autofill, unsafe downloads      | Protects against credential theft & drive-by exec |
+| **DNS over HTTPS (DoH)**      | Force Cloudflare DoH protection         | Prevents DNS hijacking & ISP-level tracking        |
+| **Sharing Restrictions**      | Disable AirDrop, content caching, media | Blocks exfiltration vectors                       |
 
 ---
 
