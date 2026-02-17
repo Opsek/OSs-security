@@ -257,8 +257,8 @@ function Apply-ASLR {
         Log-Event "ASLR protection enabled" "SUCCESS"
         
     } catch {
-        Write-Log "Failed to enable ASLR: $_"
-        Log-Event "Failed to enable ASLR: $_" "WARNING"
+        Write-Log "Failed to enable ASLR: ${_}"
+        Log-Event "Failed to enable ASLR: ${_}" "WARNING"
         
         # Provide additional guidance
         if ($osEdition -eq "Core") {
@@ -310,7 +310,7 @@ function Check-SEHOP {
         } else {
             return @{
                 Status  = "WARN"
-                Message = "Unable to verify SEHOP status: $_"
+                Message = "Unable to verify SEHOP status: ${_}"
             }
         }
     }
@@ -325,7 +325,7 @@ function Apply-SEHOP {
         Log-Event "SEHOP protection enabled" "SUCCESS"
         
     } catch {
-        Write-Log "Failed to enable SEHOP: $_"
+        Write-Log "Failed to enable SEHOP: ${_}"
         
         # Provide edition-specific guidance
         if ($osEdition -eq "Core") {
@@ -333,7 +333,7 @@ function Apply-SEHOP {
             Log-Event "Failed to enable SEHOP (limited support on Home edition)" "WARNING"
         } else {
             Write-Log "Manual configuration: Windows Security > App & browser control > Exploit protection settings > System settings > SEHOP"
-            Log-Event "Failed to enable SEHOP: $_" "WARNING"
+            Log-Event "Failed to enable SEHOP: ${_}" "WARNING"
         }
     }
 }
@@ -417,7 +417,7 @@ function Check-WindowsUpdate {
     } catch {
         return @{
             Status  = "WARN"
-            Message = "Windows Update service unavailable: $_"
+            Message = "Windows Update service unavailable: ${_}"
         }
     }
 }
@@ -438,8 +438,8 @@ function Apply-WindowsUpdate {
         Log-Event "Windows Update service enabled and started" "SUCCESS"
         
     } catch {
-        Write-Log "Failed to configure Windows Update service: $_"
-        Log-Event "Windows Update setup failed: $_" "WARNING"
+        Write-Log "Failed to configure Windows Update service: ${_}"
+        Log-Event "Windows Update setup failed: ${_}" "WARNING"
     }
 }
 
@@ -682,7 +682,7 @@ function Check-ScreenTimeout {
     } catch {
         return @{
             Status  = "WARN"
-            Message = "Unable to check screen timeout via registry: $_"
+            Message = "Unable to check screen timeout via registry: ${_}"
         }
     }
 }
@@ -1217,59 +1217,112 @@ function Apply-BlockUSB {
 
 function Check-SecureDNS {
     try {
-        $dnsServers = Get-DnsClientServerAddress -ErrorAction Stop | Where-Object { ${_}.AddressFamily -eq 2 }  # IPv4 only
-        $mismatched = $dnsServers | Where-Object { ${_}.ServerAddresses -notcontains "9.9.9.9" }
+        $dnsServers = Get-DnsClientServerAddress -AddressFamily IPv4
 
-        if ($mismatched) {
-            return @{
-                Status  = "FAIL"
-                Message = "One or more interfaces do not use secure DNS 9.9.9.9"
-            }
-        } else {
+        $dnsServers | ForEach-Object {
+            Write-Log "Interface $($_.InterfaceAlias) DNS: $($_.ServerAddresses -join ", ")"
+        }
+
+        $matching = @($dnsServers | Where-Object {
+            ($_.ServerAddresses | Where-Object { $_.Trim() -eq "9.9.9.9" }).Count -gt 0
+        })
+        Write-Host "$($matching.Count)"
+        if ($matching.Count -gt 0) {
             return @{
                 Status  = "OK"
-                Message = "All IPv4 interfaces use DNS 9.9.9.9"
+                Message = "At least one IPv4 interface is configured with secure DNS 9.9.9.9"
             }
         }
+        else {
+            return @{
+                Status  = "FAIL"
+                Message = "No IPv4 interface is configured with secure DNS 9.9.9.9"
+            }
+        }
+
     } catch {
         return @{
             Status  = "WARN"
-            Message = "Unable to check DNS settings: ${_}"
+            Message = "Unable to check DNS settings: $_"
         }
     }
 }
 
 function Apply-SecureDNS {
-    if (Ask-YesNo "Do you want to set a secure DNS (9.9.9.9)?") {
-        try {
-            $dnsServers = Get-DnsClientServerAddress -ErrorAction Stop | Where-Object { ${_}.AddressFamily -eq 2 }  # IPv4 only
-            $updated = 0
-            foreach ($dns in $dnsServers) {
-                try {
-                    Set-DnsClientServerAddress -InterfaceIndex $dns.InterfaceIndex -ServerAddresses "9.9.9.9" -ErrorAction Stop
-                    $updated++
-                } catch {
-                    Log-Event "Failed to set DNS on interface $($dns.InterfaceIndex): ${_}" "WARNING"
-                }
-            }
-            Log-Event "DNS updated on $updated interface(s)" "SUCCESS"
-            Write-Log "   WARNING: DNS changes may not persist across network resets or VPN connections."
-            Write-Log "   For persistent DNS: use Group Policy or configure static IP."
 
-            # Validation
-            $validationDNS = Resolve-DnsName -Name "example.com" -Server "9.9.9.9" -ErrorAction SilentlyContinue
-            if ($validationDNS) {
-                Log-Event "DNS validation successful" "SUCCESS"
-            } else {
-                Log-Event "DNS validation failed; verify connectivity" "WARNING"
-            }
-        } catch {
-            Log-Event "DNS setup failed: ${_}" "ERROR"
-        }
-    } else {
+    # Ask user if they want to configure secure DNS
+    if (-not (Ask-YesNo "Do you want to configure secure DNS (9.9.9.9)?")) {
         Write-Log "-> Keeping current DNS configuration."
+        return
+    }
+
+    try {
+        # Retrieve all IPv4 DNS client interfaces
+        $dnsAdapters = Get-DnsClientServerAddress -AddressFamily IPv4 -ErrorAction Stop
+
+        # Retrieve full network adapter details
+        $netAdapters = Get-NetAdapter -ErrorAction Stop
+
+        foreach ($dns in $dnsAdapters) {
+
+            # Match DNS entry with its corresponding network adapter
+            $adapter = $netAdapters | Where-Object { $_.InterfaceIndex -eq $dns.InterfaceIndex }
+
+            # Skip if adapter not found or not active
+            if (-not $adapter -or $adapter.Status -ne "Up") { continue }
+
+            # Log adapter information
+            Write-Log ""
+            Write-Log "Detected network interface:"
+            Write-Log "   Name        : $($adapter.Name)"
+            Write-Log "   Description : $($adapter.InterfaceDescription)"
+            Write-Log "   Media Type  : $($adapter.MediaType)"
+            Write-Log ""
+
+            # Detect potential VPN, virtual, or tunnel adapters
+            if ($adapter.InterfaceDescription -match "VPN|TAP|Tunnel|PPP|Virtual|Hyper-V") {
+                Write-Log "WARNING: This interface appears to be a VPN or tunnel adapter." "WARNING"
+                Write-Log "Overriding DNS may break internal name resolution." "WARNING"
+                Write-Log "You may lose access to internal or corporate resources." "WARNING"
+                Write-Log ""
+            }
+
+            # Prompt user for this interface
+            if (Ask-YesNo "Apply secure DNS to this interface?") {
+                try {
+                    # Apply Quad9 DNS
+                    Set-DnsClientServerAddress `
+                        -InterfaceIndex $adapter.InterfaceIndex `
+                        -ServerAddresses "9.9.9.9" `
+                        -ErrorAction Stop
+
+                    Log-Event "DNS successfully applied to interface $($adapter.Name)" "SUCCESS"
+                } catch {
+                    Log-Event "Failed to configure DNS on $($adapter.Name): $_" "WARNING"
+                }
+            } else {
+                Write-Log "-> Interface skipped."
+            }
+        }
+
+        # Validate DNS resolution against Quad9
+        Write-Log ""
+        Write-Log "Validating DNS resolution..."
+        $validation = Resolve-DnsName -Name "example.com" -Server "9.9.9.9" -ErrorAction SilentlyContinue
+
+        if ($validation) {
+            Log-Event "DNS validation successful." "SUCCESS"
+        } else {
+            Log-Event "DNS validation failed - check connectivity." "WARNING"
+        }
+
+    } catch {
+        # Catch global failure
+        Log-Event "DNS configuration failed: $_" "ERROR"
     }
 }
+
+
 
 # =========================
 # Controlled Folder Access (CFA)
@@ -1307,7 +1360,7 @@ function Check-CFA {
 function Apply-CFA {
     Write-Log "   WARNING: Controlled Folder Access may block legitimate applications."
     Write-Log "   Protected folders: Documents, Desktop, Downloads, Pictures, Videos, Music."
-    Write-Log "   You will need to manually allow apps in: Windows Security -> Virus & threat protection -> Manage settings -> Allowed apps"
+    Write-Log "   You will need to manually allow apps in: Windows Security -> Virus and threat protection -> Manage settings -> Allowed apps"
 
     if (Ask-YesNo "Do you really want to ENABLE Controlled Folder Access?") {
         try {
@@ -1442,15 +1495,29 @@ $Modules = @(
 # =========================
 # MODULE FILTER
 # =========================
-if ($Module) {
-    $Modules = $Modules | Where-Object {
-        ${_}.Name -match $Module
-    }
+# =========================
+# MODULE FILTER & EXECUTION
+# =========================
 
-    if (-not $Modules) {
+
+if ($Module) {
+    $filtered = $Modules | Where-Object { $_.Name -match $Module }
+
+    if (-not $filtered) {
         Write-Error "Module '$Module' not found."
         exit 1
     }
+
+    foreach ($m in $filtered) {
+        Write-Log "Running Apply: $($m.Name)"
+        $applyBlock = $m.Apply
+        if ($applyBlock -and $applyBlock.ToString().Trim() -ne "") {
+            & $applyBlock
+        } else {
+            Write-Log "No Apply function defined for: $($m.Name)"
+        }
+    }
+    exit 1
 }
 
 # =========================
