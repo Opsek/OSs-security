@@ -7,6 +7,16 @@ Always be cautious with the software you install and the commands you execute.
 
 ---
 
+## Contents
+
+| OS       | Hardening script                | Factory reset guide                                       |
+|----------|---------------------------------|-----------------------------------------------------------|
+| Linux    | [Hardening Script](./linux/)    | [Factory Reset Guide](./linux/factory-reset-linux.md)     |
+| macOS    | [Hardening Script](./macos/)    | [Factory Reset Guide](./macos/factory-reset-macos.md)     |
+| Windows  | [Hardening Script](./windows/)  | [Factory Reset Guide](./windows/factory-reset-windows.md) |
+
+---
+
 ## 🛡️ Security audits
 
 This project has been independently audited by **two** security firms:
@@ -21,16 +31,6 @@ This project has been independently audited by **two** security firms:
 [![Sigma Prime Audit Report Preview](./audit-report-preview.png)](./audit-report-hardening-scripts.pdf)
 
 *Click the image to view the full Sigma Prime audit report.*
-
----
-
-## Contents
-
-| OS       | Hardening script                | Factory reset guide                                       |
-|----------|---------------------------------|-----------------------------------------------------------|
-| Linux    | [Hardening Script](./linux/)    | [Factory Reset Guide](./linux/factory-reset-linux.md)     |
-| macOS    | [Hardening Script](./macos/)    | [Factory Reset Guide](./macos/factory-reset-macos.md)     |
-| Windows  | [Hardening Script](./windows/)  | [Factory Reset Guide](./windows/factory-reset-windows.md) |
 
 ---
 
