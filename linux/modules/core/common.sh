@@ -191,7 +191,10 @@ backup_file() {
         return 0
     fi
 
-    cp -a "$file" "$dest_file" || true
+    if ! cp -a "$file" "$dest_file"; then
+        log_error "Failed to create backup for $file at $dest_file"
+        return 1
+    fi
     log_verbose "Backup created: $dest_file"
 }
 
@@ -221,8 +224,14 @@ ensure_owner_perm() {
     return 0
   fi
   backup_file "$path"
-  chown "$owner:$group" "$path" 2>/dev/null || true
-  chmod "$mode" "$path" 2>/dev/null || true
+  if ! chown "$owner:$group" "$path"; then
+    log_error "Failed to set owner/group on $path to $owner:$group"
+    return 1
+  fi
+  if ! chmod "$mode" "$path"; then
+    log_error "Failed to set permissions on $path to $mode"
+    return 1
+  fi
 }
 
 pkg_install() {
@@ -273,7 +282,10 @@ service_enable_start() {
     if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
       log_info "[dry-run] systemctl enable $svc"
     else
-      systemctl enable "$svc" || true
+      if ! systemctl enable "$svc"; then
+        log_error "Failed to enable service: $svc"
+        return 1
+      fi
     fi
   fi
   if systemctl is-active "$svc" >/dev/null 2>&1; then
@@ -282,7 +294,10 @@ service_enable_start() {
     if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
       log_info "[dry-run] systemctl start $svc"
     else
-      systemctl start "$svc" || true
+      if ! systemctl start "$svc"; then
+        log_error "Failed to start service: $svc"
+        return 1
+      fi
     fi
   fi
 }
@@ -325,7 +340,10 @@ sysctl_apply() {
   backup_file /etc/sysctl.conf
   mkdir -p /etc/sysctl.d
   apply_line /etc/sysctl.d/99-harden.conf "${key//./\\.}\s*=" "$key = $value"
-  sysctl -w "$key=$value" || true
+  if ! sysctl -w "$key=$value"; then
+    log_error "Failed to apply kernel parameter: $key = $value"
+    return 1
+  fi
 }
 
 sed_comment_out() {
@@ -335,7 +353,10 @@ sed_comment_out() {
     return 0
   fi
   backup_file "$file"
-  sed -ri "/$pattern/ s/^/# /" "$file" 2>/dev/null || true
+  if ! sed -ri "/$pattern/ s/^/# /" "$file"; then
+    log_error "Failed to comment out entries matching '$pattern' in $file"
+    return 1
+  fi
 }
 
 ensure_sshd_conf() {
@@ -349,5 +370,3 @@ ensure_sshd_conf() {
   mkdir -p /etc/ssh
   apply_line "$file" "${key//\//\/}" "$key $value"
 }
-
-

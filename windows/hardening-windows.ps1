@@ -1382,111 +1382,133 @@ function Apply-CFA {
 $Modules = @(
     @{
         Name  = "User Account Control (Always Notify)"
+        Alias = @("UAC")
         Check = { Check-UAC }
         Apply = { Apply-UAC }
     },
     @{
         Name  = "Windows Firewall"
+        Alias = @("Firewall")
         Check = { Check-Firewall }
         Apply = { Apply-Firewall }
     },
         @{
         Name  = "ASLR Enforcement"
+        Alias = @("ASLR")
         Check = { Check-ASLR }
         Apply = { Apply-ASLR }
     },
         @{
         Name  = "SEHOP Enforcement"
+        Alias = @("SEHOP")
         Check = { Check-SEHOP }
         Apply = { Apply-SEHOP }
     },
     @{
         Name  = "Windows Defender Health"
+        Alias = @("DefenderHealth")
         Check = { Check-DefenderHealth }
         Apply = { Apply-DefenderHealth }
     },
     @{
         Name  = "Windows Update Service"
+        Alias = @("WindowsUpdate")
         Check = { Check-WindowsUpdate }
         Apply = { Apply-WindowsUpdate }
     },
     @{
         Name  = "Memory Integrity (HVCI)"
+        Alias = @("MemoryIntegrity", "HVCI")
         Check = { Check-MemoryIntegrity }
         Apply = { Apply-MemoryIntegrity }
     },
     @{
         Name  = "Credential Guard"
+        Alias = @("CredentialGuard")
         Check = { Check-CredentialGuard }
         Apply = { Apply-CredentialGuard }
     },
     @{
         Name  = "Disable Office Word Macros (All Users)"
+        Alias = @("WordMacros")
         Check = { Check-WordMacros }
         Apply = { Apply-WordMacros }
     },
     @{
         Name  = "Screen Timeout Policy (1 minute)"
+        Alias = @("ScreenTimeout")
         Check = { Check-ScreenTimeout }
         Apply = {  }
     },
     @{
         Name  = "LSA Protection (RunAsPPL)"
+        Alias = @("LSAProtection", "RunAsPPL")
         Check = { Check-LSAProtection }
         Apply = { Apply-LSAProtection }
     },
     @{
         Name  = "Secure Boot"
+        Alias = @("SecureBoot")
         Check = { Check-SecureBoot }
         Apply = { Apply-SecureBoot }
     },
     @{
         Name  = "Disable SMBv1 Protocol"
+        Alias = @("SMBv1")
         Check = { Check-SMBv1 }
         Apply = { Apply-SMBv1 }
     },
     @{
         Name  = "Microsoft / Online Accounts Detection"
+        Alias = @("OnlineAccounts")
         Check = { Check-OnlineAccounts }
         Apply = { Apply-OnlineAccounts }
     },
     @{
         Name  = "Enforce Password on Wake / Resume"
+        Alias = @("PasswordOnWake")
         Check = { Check-PasswordOnWake }
         Apply = { Apply-PasswordOnWake }
     },
     @{
         Name  = "Show File Extensions"
+        Alias = @("FileExtensions")
         Check = { Check-FileExtensions }
         Apply = { Apply-FileExtensions }
     },
     @{
         Name  = "Disable Windows Copilot / AI Features"
+        Alias = @("WindowsCopilot", "Copilot")
         Check = { Check-WindowsCopilot }
         Apply = { Apply-WindowsCopilot }
     },
     @{
         Name  = "OneDrive Removal / Disable"
+        Alias = @("OneDrive")
         Check = { Check-OneDrive }
         Apply = { Apply-OneDrive }
     },
     @{
         Name  = "Disk Encryption (BitLocker / Device Encryption)"
+        Alias = @("DiskEncryption", "BitLocker", "DeviceEncryption")
         Check = { Check-DiskEncryption }
         Apply = { Apply-DiskEncryption }
     },
     @{
         Name  = "Block USB Removable Device Installation"
+        Alias = @("BlockUSB", "USB")
         Check = { Check-BlockUSB }
         Apply = { Apply-BlockUSB }
     },
     @{
         Name  = "Set Secure DNS (9.9.9.9)"
+        Alias = @("SecureDNS")
         Check = { Check-SecureDNS }
         Apply = { Apply-SecureDNS }
     },
     @{
         Name  = "Controlled Folder Access (CFA)"
+        Alias = @("CFA", "ControlledFolderAccess")
         Check = { Check-CFA }
         Apply = { Apply-CFA }
     }
@@ -1501,7 +1523,9 @@ $Modules = @(
 
 
 if ($Module) {
-    $filtered = $Modules | Where-Object { $_.Name -match $Module }
+    $filtered = @($Modules | Where-Object {
+        $_.Name -ieq $Module -or ($_.ContainsKey("Alias") -and @($_.Alias) -icontains $Module)
+    })
 
     if (-not $filtered) {
         Write-Error "Module '$Module' not found."
@@ -1509,15 +1533,12 @@ if ($Module) {
     }
 
     foreach ($m in $filtered) {
-        Write-Log "Running Apply: $($m.Name)"
-        $applyBlock = $m.Apply
-        if ($applyBlock -and $applyBlock.ToString().Trim() -ne "") {
-            & $applyBlock
-        } else {
-            Write-Log "No Apply function defined for: $($m.Name)"
-        }
+        Invoke-Module `
+            -Name  $m.Name `
+            -Check $m.Check `
+            -Apply $m.Apply
     }
-    exit 1
+    exit 0
 }
 
 # =========================

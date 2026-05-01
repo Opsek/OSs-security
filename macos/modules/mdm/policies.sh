@@ -218,11 +218,11 @@ cat <<EOF
   <string>System Restrictions</string>
   <key>allowAirDrop</key>
   <false/>
-  <key>allowBluetoothModification</key>
-  <false/>
   <key>allowAssistant</key>
   <false/>
   <key>allowAssistantWhileLocked</key>
+  <false/>
+  <key>allowDictation</key>
   <false/>
   <key>allowActivityContinuation</key>
   <false/>
@@ -231,6 +231,52 @@ cat <<EOF
   <key>allowCloudKeychainSync</key>
   <false/>
   <key>allowCloudPhotoLibrary</key>
+  <false/>
+</dict>
+EOF
+}
+
+############################
+# PRIVACY / TELEMETRY RESTRICTIONS
+############################
+add_privacy_restrictions_policy() {
+cat <<EOF
+<dict>
+  <key>PayloadType</key>
+  <string>com.apple.applicationaccess</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+  <key>PayloadIdentifier</key>
+  <string>com.security.privacy.$(generate_uuid)</string>
+  <key>PayloadUUID</key>
+  <string>$(generate_uuid)</string>
+  <key>PayloadDisplayName</key>
+  <string>Privacy and Telemetry Restrictions</string>
+  <key>allowDiagnosticSubmission</key>
+  <false/>
+  <key>allowSpotlightInternetResults</key>
+  <false/>
+</dict>
+EOF
+}
+
+############################
+# BLUETOOTH RESTRICTIONS
+############################
+add_bluetooth_restrictions_policy() {
+cat <<EOF
+<dict>
+  <key>PayloadType</key>
+  <string>com.apple.applicationaccess</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+  <key>PayloadIdentifier</key>
+  <string>com.security.bluetooth.$(generate_uuid)</string>
+  <key>PayloadUUID</key>
+  <string>$(generate_uuid)</string>
+  <key>PayloadDisplayName</key>
+  <string>Bluetooth Restrictions</string>
+  <key>allowBluetoothModification</key>
   <false/>
 </dict>
 EOF
@@ -304,8 +350,20 @@ cat <<EOF
   <false/>
   <key>AutoOpenSafeDownloads</key>
   <false/>
+  <key>BlockStoragePolicy</key>
+  <integer>1</integer>
+  <key>SafariGeolocationPermissionPolicy</key>
+  <integer>0</integer>
+  <key>SendDoNotTrackHTTPHeader</key>
+  <true/>
   <key>WarnAboutFraudulentWebsites</key>
   <true/>
+  <key>WebKitJavaEnabled</key>
+  <false/>
+  <key>WebKitJavaScriptCanOpenWindowsAutomatically</key>
+  <false/>
+  <key>WebKitStorageBlockingPolicy</key>
+  <integer>1</integer>
 </dict>
 EOF
 }
