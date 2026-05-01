@@ -4,6 +4,8 @@ lock_system_accounts() {
     log_info "Securing system accounts by restricting shell access"
     log_info "Identifying and locking non-essential system accounts"
 
+    local failures=0
+
     while IFS=: read -r name _ uid gid gecos home shell; do
 
         # Skip root explicitly
@@ -17,12 +19,23 @@ lock_system_accounts() {
                 log_info "[dry-run] usermod -s /usr/sbin/nologin $name"
             else
                 if command -v usermod >/dev/null 2>&1; then
-                    usermod -s /usr/sbin/nologin "$name" 2>/dev/null || true
+                    if ! usermod -s /usr/sbin/nologin "$name"; then
+                        log_error "Failed to restrict shell for system account: $name"
+                        failures=$((failures + 1))
+                    fi
+                else
+                    log_error "usermod command not found; cannot restrict shell for system account: $name"
+                    failures=$((failures + 1))
                 fi
             fi
         fi
 
     done </etc/passwd
+
+    if (( failures > 0 )); then
+        log_error "Failed to restrict shell access for $failures system account(s)"
+        return 1
+    fi
 }
 
 configure_password_aging() {
@@ -32,13 +45,23 @@ configure_password_aging() {
         return
     fi
 
+    local failures=0
+
     for u in $(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd); do
         if [[ "${HARDEN_DRY_RUN:-false}" == "true" ]]; then
             log_info "[dry-run] chage -M 90 -m 1 -W 14 $u"
         else
-            chage -M 90 -m 1 -W 14 "$u" 2>/dev/null || true
+            if ! chage -M 90 -m 1 -W 14 "$u"; then
+                log_error "Failed to configure password aging for user: $u"
+                failures=$((failures + 1))
+            fi
         fi
     done
+
+    if (( failures > 0 )); then
+        log_error "Failed to configure password aging for $failures user account(s)"
+        return 1
+    fi
 }
 
 secure_login_defs() {
@@ -69,5 +92,3 @@ secure_login_defs() {
     
     log_info "Login policies have been configured"
 }
-
-

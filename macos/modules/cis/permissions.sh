@@ -10,6 +10,11 @@ secure_home_folders() {
     
     # Set proper permissions for existing user home folders
     for user_home in /Users/*; do
+        if [[ -L "$user_home" ]]; then
+            warn "Skipping symlinked /Users entry: $user_home"
+            continue
+        fi
+
         if [[ -d "$user_home" ]] && [[ "$(basename "$user_home")" != "Shared" ]]; then
             execute "chmod 700 '$user_home'" || warn "Could not secure $user_home"
         fi
@@ -141,10 +146,19 @@ require_password_wake() {
 require_admin_system_prefs() {
     info "CIS 5.11 - Requiring admin password for system preferences"
     
-    execute "security authorizationdb read system.preferences > /tmp/system.preferences.plist"
-    execute "defaults write /tmp/system.preferences.plist shared -bool false"
-    execute "security authorizationdb write system.preferences < /tmp/system.preferences.plist"
-    execute "rm /tmp/system.preferences.plist"
+    local temp_dir
+    local auth_plist
+    temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/system.preferences.XXXXXX")" || {
+        warn "Could not create secure temporary directory for system.preferences"
+        return 1
+    }
+    chmod 700 "$temp_dir"
+    auth_plist="$temp_dir/system.preferences.plist"
+
+    execute "security authorizationdb read system.preferences > '$auth_plist'"
+    execute "defaults write '$auth_plist' shared -bool false"
+    execute "security authorizationdb write system.preferences < '$auth_plist'"
+    rm -rf "$temp_dir"
     
 }
 

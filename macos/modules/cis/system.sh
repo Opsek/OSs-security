@@ -94,7 +94,16 @@ configure_audit_flags() {
     
     backup_file "/etc/security/audit_control"
     
-    cat > /tmp/audit_control << 'EOF'
+    local temp_dir
+    local audit_control_file
+    temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/audit_control.XXXXXX")" || {
+        warn "Could not create secure temporary directory for audit_control"
+        return 1
+    }
+    chmod 700 "$temp_dir"
+    audit_control_file="$temp_dir/audit_control"
+
+    cat > "$audit_control_file" << 'EOF'
 #
 # $P4: //depot/projects/trustedbsd/openbsm/etc/audit_control#8 $
 #
@@ -111,8 +120,8 @@ member-set-sflags-mask:
 member-clear-sflags-mask:has_authenticated
 EOF
     
-    execute "cp /tmp/audit_control /etc/security/audit_control"
-    execute "rm /tmp/audit_control"
+    execute "cp '$audit_control_file' /etc/security/audit_control"
+    rm -rf "$temp_dir"
     
 }
 
