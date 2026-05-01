@@ -7,8 +7,18 @@
 
 set -euo pipefail
 
+if [[ -z "${SCRIPT_DIR:-}" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+fi
+
 # Source the policies file
 source "${SCRIPT_DIR}/modules/mdm/policies.sh"
+
+# Source profile metadata when available so generation can warn about shell-only
+# controls that still need the traditional paranoid hardening script.
+if [[ -f "${SCRIPT_DIR}/config/profiles.conf" ]]; then
+    source "${SCRIPT_DIR}/config/profiles.conf"
+fi
 
 # Generate a unique UUID for the profile
 generate_uuid() {
@@ -109,6 +119,8 @@ generate_paranoid_profile() {
         add_ssh_policy
 
         add_core_restrictions_policy
+        add_privacy_restrictions_policy
+        add_bluetooth_restrictions_policy
         add_remote_access_policy
         add_safari_policy
         add_dns_policy
@@ -116,6 +128,34 @@ generate_paranoid_profile() {
 
         create_profile_footer "paranoid" "$profile_uuid" "$timestamp"
     } > "$output_file"
+}
+
+print_paranoid_shell_required_warning() {
+    if [[ -z "${PROFILE_PARANOID_SHELL_REQUIRED:-}" ]]; then
+        return 0
+    fi
+
+    echo ""
+    echo "========================================================================"
+    echo "WARNING: paranoid coverage is incomplete with the MDM profile alone"
+    echo "========================================================================"
+    echo "The paranoid MDM profile applies the persistent controls available through"
+    echo "configuration profiles. The following controls remain shell-only and must"
+    echo "be applied with the hardening script to achieve complete paranoid coverage:"
+    echo ""
+
+    while IFS= read -r control; do
+        control="${control#"${control%%[![:space:]]*}"}"
+        control="${control%"${control##*[![:space:]]}"}"
+        if [[ -n "$control" ]]; then
+            echo "  - $control"
+        fi
+    done <<< "$PROFILE_PARANOID_SHELL_REQUIRED"
+
+    echo ""
+    echo "Recommended command after installing the MDM profile:"
+    echo "  sudo ./main.sh --paranoid"
+    echo "========================================================================"
 }
 
 # Main function to generate MDM profile
@@ -159,6 +199,9 @@ generate_mdm_profile() {
     # Verify file was created
     if [[ -f "$output_file" ]]; then
         echo "✓ Profile generated: $output_file"
+        if [[ "$profile_type" == "paranoid" ]]; then
+            print_paranoid_shell_required_warning
+        fi
         echo ""
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo "📦 INSTALLATION INSTRUCTIONS"

@@ -31,8 +31,10 @@ check_prereqs() {
         [[ ! $REPLY =~ ^[Yy]$ ]] && exit 1
     fi
     
-    # Check required commands
-    local required_commands=("git" "bash" "chmod")
+    # Check required commands. Do not install third-party dependencies here;
+    # the installer must not introduce package managers or community binaries
+    # as part of a hardening workflow.
+    local required_commands=("chmod" "find" "sudo" "sw_vers")
     for cmd in "${required_commands[@]}"; do
         if ! command -v "$cmd" &> /dev/null; then
             error "Required command not found: $cmd"
@@ -41,47 +43,6 @@ check_prereqs() {
     done
     
     success "Prerequisites check passed"
-}
-
-# Install dependencies
-install_dependencies() {
-    info "Installing dependencies..."
-
-    # Dependencies required by the hardening scripts
-    local packages=("bash" "git")
-
-    # Check whether brew is actually required
-    local brew_required=false
-    for package in "${packages[@]}"; do
-        if ! command -v "$package" &>/dev/null; then
-            brew_required=true
-            break
-        fi
-    done
-
-    if [[ "$brew_required" == false ]]; then
-        success "All required dependencies already available"
-        return 0
-    fi
-
-    # If brew is required but not installed, fail safely
-    if ! command -v brew &>/dev/null; then
-        error "Homebrew is not installed but is required for missing dependencies"
-        error "For security reasons this script will NOT auto-install Homebrew"
-        error "Please install Homebrew manually from: https://brew.sh"
-        error "Then re-run this hardening script"
-        exit 1
-    fi
-
-    # Install only what is missing
-    for package in "${packages[@]}"; do
-        if ! command -v "$package" &>/dev/null; then
-            info "Installing $package via Homebrew"
-            brew install "$package"
-        else
-            success "$package already present"
-        fi
-    done
 }
 
 # Configure permissions
@@ -148,7 +109,6 @@ main() {
     echo
     
     check_prereqs
-    install_dependencies
     setup_permissions
     create_directories
     show_post_install_info
