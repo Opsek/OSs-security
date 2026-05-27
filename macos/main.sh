@@ -229,6 +229,19 @@ main() {
         error "Failed to apply profile: $PROFILE"
         exit 1
     fi
+
+    # Apply optional Lockdown-compatible restrictions when explicitly requested.
+    if [[ "$ENABLE_LOCKDOWN" == true ]]; then
+        echo
+        if function_exists "enable_lockdown_mode"; then
+            if ! enable_lockdown_mode; then
+                warn "Lockdown Mode compatible settings were not fully applied"
+            fi
+        else
+            error "Lockdown Mode module is not available"
+            exit 1
+        fi
+    fi
     
     # Create rollback script if not dry-run
     if [[ "$DRY_RUN" == false ]]; then
