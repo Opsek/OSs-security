@@ -20,8 +20,24 @@ cis_check_filevault() {
 # CIS compliance check for Firewall
 cis_check_firewall() {
     info "Checking Firewall compliance"
-    
-    if /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate | grep -q "Firewall is enabled"; then
+    local firewall_state=""
+
+    firewall_state="$(defaults read /Library/Preferences/com.apple.alf globalstate 2>/dev/null || true)"
+
+    if [[ ! "$firewall_state" =~ ^[0-9]+$ ]] && [[ -x /usr/libexec/ApplicationFirewall/socketfilterfw ]]; then
+        firewall_state="$(
+            /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate 2>/dev/null \
+                | sed -nE 's/.*State = ([0-9]+).*/\1/p'
+        )"
+    fi
+
+    # ↓ Ajout ici, après les deux tentatives de lecture
+    if [[ -z "$firewall_state" ]]; then
+        warn "✗ CIS 2.7.1 - Impossible de lire l'état du pare-feu"
+        return 1
+    fi
+
+    if [[ "$firewall_state" == "1" || "$firewall_state" == "2" ]]; then
         success "✓ CIS 2.7.1 - Firewall is enabled"
         return 0
     else
