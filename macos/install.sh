@@ -77,6 +77,11 @@ create_directories() {
             info "Directory already exists: $dir"
         fi
     done
+
+    # Let the non-root GUI list snapshots: /var/backups ships 700 root:wheel.
+    # 711 traverse-only on the parent, 755 on our root; backup_<ts> dirs stay 700.
+    sudo chmod 711 /var/backups
+    sudo chmod 755 /var/backups/macos_hardening
 }
 
 

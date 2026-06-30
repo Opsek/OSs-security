@@ -17,12 +17,17 @@ disable_automatic_login() {
 # CIS 5.9 - Require a password to wake the computer from sleep or screen saver
 require_password_wake() {
     info "CIS 5.9 - Requiring password on wake"
-    
-    backup_file "$HOME/Library/Preferences/com.apple.screensaver.plist"
-    
-    execute "defaults write com.apple.screensaver askForPassword -int 1"
-    execute "defaults write com.apple.screensaver askForPasswordDelay -int 0"
-    
+
+    # Cannot be set from a script on macOS 13+ (sysadminctl needs the password,
+    # the defaults keys are inert), so detect the state and guide the user.
+    local status
+    status="$(user_screenlock_status 2>/dev/null)"
+
+    if echo "$status" | grep -qi "screenLock delay is immediate"; then
+        success "CIS 5.9 - A password is already required immediately after the screen saver"
+    else
+        warn "CIS 5.9 - Set Require password to Immediately in System Settings > Lock Screen. This cannot be set from a script on this macOS; the MDM profile can enforce it."
+    fi
 }
 
 # CIS 5.11 - Require an administrator password to access system-wide preferences
@@ -66,16 +71,6 @@ set_login_message() {
     
 }
 
-
-# CIS 5.15 - Do not enter a password-based screensaver mode
-disable_password_screensaver_mode() {
-    info "CIS 5.15 - Configuring screensaver password mode"
-    
-    backup_file "$HOME/Library/Preferences/com.apple.screensaver.plist"
-    
-    execute "defaults write com.apple.screensaver askForPassword -int 1"
-    
-}
 
 # CIS 6.1.1 - Display login window as name and password
 configure_login_window_style() {
@@ -132,18 +127,20 @@ remove_guest_home() {
 show_filename_extensions() {
     info "CIS 6.2 - Showing filename extensions"
     
-    backup_file "$HOME/Library/Preferences/.GlobalPreferences.plist"
-    
-    execute "defaults write NSGlobalDomain AppleShowAllExtensions -bool true"
-    
+    user_backup_file "Library/Preferences/.GlobalPreferences.plist"
+
+    user_execute "defaults write NSGlobalDomain AppleShowAllExtensions -bool true"
+    # Restart Finder so the change is visible immediately for the user.
+    user_execute "killall Finder 2>/dev/null || true"
+
 }
 
 # CIS 6.3 - Disable the automatic run of safe files in Safari
 disable_safari_safe_files() {
     info "CIS 6.3 - Disabling Safari automatic safe file opening"
     
-    backup_file "$HOME/Library/Preferences/com.apple.Safari.plist"
-    
-    execute "defaults write com.apple.Safari AutoOpenSafeDownloads -bool false"
-    
+    user_backup_file "Library/Preferences/com.apple.Safari.plist"
+
+    user_execute "defaults write com.apple.Safari AutoOpenSafeDownloads -bool false"
+
 }
