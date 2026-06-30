@@ -8,14 +8,14 @@
 disable_siri_dictation() {
     info "OPSEK - Disabling Siri and dictation"
     
-    backup_file "$HOME/Library/Preferences/com.apple.assistant.support.plist"
-    backup_file "$HOME/Library/Preferences/com.apple.Siri.plist"
-    backup_file "$HOME/Library/Preferences/com.apple.speech.recognition.AppleSpeechRecognition.prefs.plist"
-    
-    execute "defaults write com.apple.assistant.support 'Assistant Enabled' -bool false"
-    execute "defaults write com.apple.Siri StatusMenuVisible -bool false"
-    execute "defaults write com.apple.Siri UserHasDeclinedEnable -bool true"
-    execute "defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMMasterDictationEnabled -bool false"
+    user_backup_file "Library/Preferences/com.apple.assistant.support.plist"
+    user_backup_file "Library/Preferences/com.apple.Siri.plist"
+    user_backup_file "Library/Preferences/com.apple.speech.recognition.AppleSpeechRecognition.prefs.plist"
+
+    user_execute "defaults write com.apple.assistant.support 'Assistant Enabled' -bool false"
+    user_execute "defaults write com.apple.Siri StatusMenuVisible -bool false"
+    user_execute "defaults write com.apple.Siri UserHasDeclinedEnable -bool true"
+    user_execute "defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMMasterDictationEnabled -bool false"
     
 }
 
@@ -44,9 +44,9 @@ disable_location_services() {
 disable_spotlight_suggestions() {
     info "OPSEK - Disabling Spotlight suggestions"
     
-    backup_file "$HOME/Library/Preferences/com.apple.spotlight.plist"
-    
-    execute "defaults write com.apple.spotlight orderedItems -array \
+    user_backup_file "Library/Preferences/com.apple.spotlight.plist"
+
+    user_execute "defaults write com.apple.spotlight orderedItems -array \
         '{ enabled = 1; name = APPLICATIONS; }' \
         '{ enabled = 1; name = SYSTEM_PREFS; }' \
         '{ enabled = 1; name = DIRECTORIES; }' \
@@ -89,15 +89,15 @@ disable_ipv6_on_interfaces() {
 secure_safari() {
     info "OPSEK - Securing Safari browser"
     
-    backup_file "$HOME/Library/Preferences/com.apple.Safari.plist"
-    
-    execute "defaults write com.apple.Safari WebKitJavaEnabled -bool false"
-    execute "defaults write com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomatically -bool false"
-    execute "defaults write com.apple.Safari SafariGeolocationPermissionPolicy -int 0"
-    execute "defaults write com.apple.Safari BlockStoragePolicy -int 1"
-    execute "defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1"
-    execute "defaults write com.apple.Safari SendDoNotTrackHTTPHeader -bool true"
-    execute "defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true"
+    user_backup_file "Library/Preferences/com.apple.Safari.plist"
+
+    user_execute "defaults write com.apple.Safari WebKitJavaEnabled -bool false"
+    user_execute "defaults write com.apple.Safari WebKitJavaScriptCanOpenWindowsAutomatically -bool false"
+    user_execute "defaults write com.apple.Safari SafariGeolocationPermissionPolicy -int 0"
+    user_execute "defaults write com.apple.Safari BlockStoragePolicy -int 1"
+    user_execute "defaults write com.apple.Safari WebKitStorageBlockingPolicy -int 1"
+    user_execute "defaults write com.apple.Safari SendDoNotTrackHTTPHeader -bool true"
+    user_execute "defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true"
     
 }
 
@@ -127,13 +127,25 @@ configure_privacy_settings() {
     execute "defaults write /Library/Application\ Support/CrashReporter/DiagnosticMessagesHistory.plist ThirdPartyDataSubmit -bool false"
     
     # Disable personalized ads
-    backup_file "$HOME/Library/Preferences/com.apple.AdLib.plist"
-    execute "defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false"
-    execute "defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false"
-    
-    # Disable Handoff
-    backup_file "$HOME/Library/Preferences/ByHost/com.apple.coreservices.useractivityd.plist"
-    execute "defaults write ~/Library/Preferences/ByHost/com.apple.coreservices.useractivityd ActivityAdvertisingAllowed -bool no"
-    execute "defaults write ~/Library/Preferences/ByHost/com.apple.coreservices.useractivityd ActivityReceivingAllowed -bool no"
-    
+    user_backup_file "Library/Preferences/com.apple.AdLib.plist"
+    user_execute "defaults write com.apple.AdLib allowApplePersonalizedAdvertising -bool false"
+    user_execute "defaults write com.apple.AdLib allowIdentifierForAdvertising -bool false"
+
+    # Disable Handoff (ByHost). Restart useractivityd so it takes effect now.
+    user_backup_file "Library/Preferences/ByHost/com.apple.coreservices.useractivityd.plist"
+    user_execute "defaults -currentHost write com.apple.coreservices.useractivityd ActivityAdvertisingAllowed -bool no"
+    user_execute "defaults -currentHost write com.apple.coreservices.useractivityd ActivityReceivingAllowed -bool no"
+    user_execute "killall useractivityd 2>/dev/null || true"
+
+    # Disable the AirPlay receiver (ByHost). Restart Control Center to refresh.
+    # Back up the ByHost controlcenter plist first so Restore reverts AirPlay (the
+    # OPSEK audit reads this). The file carries a hardware-UUID suffix, so glob it.
+    if [[ -n "$TARGET_HOME" ]]; then
+        for _cc in "$TARGET_HOME"/Library/Preferences/ByHost/com.apple.controlcenter.*.plist; do
+            [[ -f "$_cc" ]] && backup_file "$_cc"
+        done
+    fi
+    user_execute "defaults -currentHost write com.apple.controlcenter AirplayRecieverEnabled -bool false"
+    user_execute "killall ControlCenter 2>/dev/null || true"
+
 }

@@ -98,6 +98,7 @@ HARDENING OPTIONS:
     --paranoid           Enable the 'paranoid' profile (default: recommended)
     --lockdown          Enable Lockdown Mode compatible settings (macOS 13+ only)
     --checks            Run compliance checks after hardening
+    --checks-only       Run compliance checks only, applying nothing (read-only audit)
     --dry-run           Show changes that would be made without applying them
     --yes               Assume yes to all prompts (non-interactive mode)
     --verbose           Show debug output in log

@@ -30,13 +30,14 @@ configure_time_sync() {
 # CIS 2.3.1 - Set an inactivity interval of 20 minutes or less for the screen saver
 configure_screensaver() {
     info "CIS 2.3.1 - Configuring screen saver timeout"
-    
-    backup_file ~/Library/Preferences/com.apple.screensaver.plist
-    
-    execute "defaults write com.apple.screensaver askForPassword -int 1"
-    execute "defaults write com.apple.screensaver askForPasswordDelay -int 0"
-    execute "defaults write com.apple.screensaver idleTime -int 1200"
-    
+
+    user_backup_file "Library/Preferences/com.apple.screensaver.plist"
+
+    # Idle timeout lives in the ByHost domain (-currentHost); 1200s = 20 min.
+    user_execute "defaults -currentHost write com.apple.screensaver idleTime -int 1200"
+
+    # The password requirement (CIS 5.9) is not set here: the defaults keys are
+    # inert on macOS 13+. See require_password_wake.
 }
 
 
@@ -56,13 +57,53 @@ enable_filevault() {
 # CIS 2.7.1 - Turn on Firewall
 enable_firewall() {
     info "CIS 2.7.1 - Enabling Application Firewall"
-    info "You can skip this step if the system is already secured by default (socketfilterfw no longer exists on newer Mac models)."
 
-    execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on"
-    execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on"
-    execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setallowsigned off"
-    execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setallowsignedapp off"
-    execute "/usr/libexec/ApplicationFirewall/socketfilterfw --setloggingmode on"
+    local fw="/usr/libexec/ApplicationFirewall/socketfilterfw"
+    if [[ ! -x "$fw" ]]; then
+        warn "Application Firewall control (socketfilterfw) is not present on this macOS build; skipping."
+        return 0
+    fi
+
+    # Firewall state for Restore is captured by snapshot_system_state into a
+    # dedicated firewall_restore.sh (applied last in the rollback). We do NOT
+    # back up com.apple.alf.plist: it is daemon-owned, and restoring it by cp
+    # makes the firewall daemon re-sync and clobber the toggle.
+
+    # Firewall on + stealth. Block-all is paranoid-only (see
+    # enable_firewall_block_all): it breaks AirDrop and sharing.
+    execute "$fw --setglobalstate on"
+    execute "$fw --setstealthmode on"
+
+    # Best-effort controls. Several socketfilterfw subcommands were removed or
+    # renamed on newer macOS builds, so any one of them can fail. Treat these as
+    # optional so the firewall still ends up on and stealthed.
+    execute "$fw --setallowsigned off" || warn "socketfilterfw --setallowsigned not supported on this build (ignored)"
+    execute "$fw --setallowsignedapp off" || warn "socketfilterfw --setallowsignedapp not supported on this build (ignored)"
+    execute "$fw --setloggingmode on" || warn "socketfilterfw --setloggingmode not supported on this build (ignored)"
+
+    return 0
+}
+
+# CIS 2.7.3 - Block all incoming connections (paranoid profile only).
+# Aggressive: breaks AirDrop and sharing, so it is not in the recommended profile.
+enable_firewall_block_all() {
+    info "CIS 2.7.3 - Blocking all incoming connections (paranoid)"
+
+    local fw="/usr/libexec/ApplicationFirewall/socketfilterfw"
+    if [[ ! -x "$fw" ]]; then
+        warn "Application Firewall control (socketfilterfw) is not present on this macOS build; skipping block-all."
+        return 0
+    fi
+
+    # Firewall state (including block-all) is captured for Restore by
+    # snapshot_system_state into firewall_restore.sh; the daemon-owned
+    # com.apple.alf.plist is intentionally not backed up (see enable_firewall).
+
+    # Ensure the firewall is on first, then block all non-essential incoming.
+    execute "$fw --setglobalstate on"
+    execute "$fw --setblockall on"
+
+    return 0
 }
 
 # CIS 2.8 - Enable Gatekeeper

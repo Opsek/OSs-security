@@ -18,10 +18,10 @@ disable_bluetooth_discoverable() {
 show_bluetooth_status() {
     info "CIS 2.1.3 - Showing Bluetooth status in menu bar"
     
-    backup_file "$HOME/Library/Preferences/com.apple.systemuiserver.plist"
-    
-    execute "defaults write ~/Library/Preferences/com.apple.systemuiserver 'NSStatusItem Visible com.apple.menu.bluetooth' -bool true"
-    execute "defaults write ~/Library/Preferences/com.apple.systemuiserver menuExtras -array-add '/System/Library/CoreServices/Menu Extras/Bluetooth.menu'"
+    user_backup_file "Library/Preferences/com.apple.systemuiserver.plist"
+
+    user_execute "defaults write com.apple.systemuiserver 'NSStatusItem Visible com.apple.menu.bluetooth' -bool true"
+    user_execute "defaults write com.apple.systemuiserver menuExtras -array-add '/System/Library/CoreServices/Menu Extras/Bluetooth.menu'"
     
 }
 
