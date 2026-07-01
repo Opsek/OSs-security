@@ -40,6 +40,23 @@ disable_printer_sharing() {
 }
 
 
+# CIS 2.4.5 - Disable Remote Login (SSH)
+disable_remote_login() {
+    info "CIS 2.4.5 - Disabling Remote Login (SSH)"
+
+    # The audit reads the sshd launchd job (launchctl print system/com.openssh.sshd),
+    # which is readable without Full Disk Access, so tearing that job down is what
+    # flips the check to disabled. bootout stops the running job now; disable keeps
+    # it from relaunching at boot. Both are root-capable and need no FDA.
+    execute "launchctl bootout system/com.openssh.sshd 2>/dev/null || true"
+    execute "launchctl disable system/com.openssh.sshd 2>/dev/null || true"
+
+    # The supported toggle as a complement. It needs the calling app to hold Full
+    # Disk Access (the onboarding now enforces it); -f skips the interactive
+    # confirmation, and the guard keeps a no-FDA run from failing the whole step.
+    execute "systemsetup -f -setremotelogin off 2>/dev/null || true"
+}
+
 # CIS 2.4.6 - Disable File Sharing
 disable_file_sharing() {
     info "CIS 2.4.6 - Disabling File Sharing"
@@ -68,11 +85,16 @@ disable_wake_on_lan() {
 # CIS 2.11 - Disabling AirDrop
 disable_airdrop() {
     info "CIS 2.11 - Disabling AirDrop"
-    
-    backup_file "$HOME/Library/Preferences/com.apple.NetworkBrowser.plist"
-    
-    execute "defaults write com.apple.NetworkBrowser DisableAirDrop -bool true"
 
+    # Live AirDrop posture on macOS 13+ is sharingd DiscoverableMode. Write it,
+    # then restart sharingd (it caches the mode and rewrites its plist on exit).
+    user_backup_file "Library/Preferences/com.apple.sharingd.plist"
+    user_execute "defaults write com.apple.sharingd DiscoverableMode -string Off"
+    user_execute "killall sharingd 2>/dev/null || true"
+
+    # Legacy marker for old systems and as an audit fallback.
+    user_backup_file "Library/Preferences/com.apple.NetworkBrowser.plist"
+    user_execute "defaults write com.apple.NetworkBrowser DisableAirDrop -bool true"
 }
 
 # CIS 4.1 - Disable Bonjour advertising service
