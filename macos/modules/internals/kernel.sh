@@ -8,34 +8,34 @@
 secure_keyboard_settings() {
     info "OPSEK - Configuring secure keyboard settings"
     
-    backup_file "$HOME/Library/Preferences/.GlobalPreferences.plist"
-    backup_file "$HOME/Library/Preferences/com.apple.universalaccess.plist"
-    
+    user_backup_file "Library/Preferences/.GlobalPreferences.plist"
+    user_backup_file "Library/Preferences/com.apple.universalaccess.plist"
+
     # Disable press and hold for accented characters
-    execute "defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false"
-    
+    user_execute "defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false"
+
     # Set fast key repeat rate
-    execute "defaults write NSGlobalDomain KeyRepeat -int 2"
-    execute "defaults write NSGlobalDomain InitialKeyRepeat -int 15"
-    
+    user_execute "defaults write NSGlobalDomain KeyRepeat -int 2"
+    user_execute "defaults write NSGlobalDomain InitialKeyRepeat -int 15"
+
     # Disable automatic spelling correction
-    execute "defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false"
-    
+    user_execute "defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false"
+
     # Disable automatic capitalization
-    execute "defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false"
-    
+    user_execute "defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false"
+
     # Disable automatic period substitution
-    execute "defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false"
-    
+    user_execute "defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false"
+
     # Disable smart quotes and dashes
-    execute "defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false"
-    execute "defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false"
-    
+    user_execute "defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false"
+    user_execute "defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false"
+
     # Disable keyboard navigation to move focus between controls
-    execute "defaults write NSGlobalDomain AppleKeyboardUIMode -int 3"
-    
+    user_execute "defaults write NSGlobalDomain AppleKeyboardUIMode -int 3"
+
     # Secure keyboard access for assistive devices
-    execute "defaults write com.apple.universalaccess keyboardNavigation -bool true"
+    user_execute "defaults write com.apple.universalaccess keyboardNavigation -bool true"
     
 }
 

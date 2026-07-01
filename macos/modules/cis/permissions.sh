@@ -53,13 +53,15 @@ fix_library_permissions() {
 # CIS 5.2 - Password Policy
 configure_password_policy() {
     info "CIS 5.2 - Configuring password policy"
-    
-    # Set minimum password length
+
+    # Content rules only, applied when a password is next changed. We do NOT set
+    # an expiration: maxMinutesUntilChangePassword locked users out whose current
+    # password was already older than the limit, and forced rotation is
+    # discouraged by NIST 800-63B. Content rules never reject the current password.
     execute "pwpolicy -n /Local/Default -setglobalpolicy 'minChars=14'"
     execute "pwpolicy -n /Local/Default -setglobalpolicy 'requiresAlpha=1'"
     execute "pwpolicy -n /Local/Default -setglobalpolicy 'requiresNumeric=1'"
-    execute "pwpolicy -n /Local/Default -setglobalpolicy 'maxMinutesUntilChangePassword=525600'"
-    
+
 }
 
 # CIS 5.3 - Reduce the sudo timeout period
@@ -89,27 +91,31 @@ configure_sudo_timeout() {
 # CIS 5.4 - Automatically lock the login keychain for inactivity
 configure_keychain_lock() {
     info "CIS 5.4 - Configuring keychain auto-lock"
-    
-    execute "security set-keychain-settings -t 21600 -l ~/Library/Keychains/login.keychain"
-    
+
+    # Run as the login user with no explicit path so `security` operates on
+    # that user's default (login) keychain. Run as root, `~` was /var/root and
+    # the bare `login.keychain` name was not in root's search list, so this
+    # always failed.
+    user_execute "security set-keychain-settings -t 21600 -l"
+
 }
 
 # CIS 5.5 - Ensure login keychain is locked when the computer sleeps
 configure_keychain_sleep_lock() {
     info "CIS 5.5 - Configuring keychain lock on sleep"
-    
-    execute "security set-keychain-settings -l ~/Library/Keychains/login.keychain"
-    
+
+    user_execute "security set-keychain-settings -l"
+
 }
 
 # CIS 5.6 - Enable OCSP and CRL certificate checking
 enable_certificate_checking() {
     info "CIS 5.6 - Enabling certificate revocation checking"
     
-    backup_file "$HOME/Library/Preferences/com.apple.security.revocation.plist"
-    
-    execute "defaults write com.apple.security.revocation CRLStyle -string RequireIfPresent"
-    execute "defaults write com.apple.security.revocation OCSPStyle -string RequireIfPresent"
+    user_backup_file "Library/Preferences/com.apple.security.revocation.plist"
+
+    user_execute "defaults write com.apple.security.revocation CRLStyle -string RequireIfPresent"
+    user_execute "defaults write com.apple.security.revocation OCSPStyle -string RequireIfPresent"
     
 }
 
@@ -134,12 +140,17 @@ disable_automatic_login() {
 # CIS 5.9 - Require a password to wake the computer from sleep or screen saver
 require_password_wake() {
     info "CIS 5.9 - Requiring password on wake"
-    
-    backup_file "$HOME/Library/Preferences/com.apple.screensaver.plist"
-    
-    execute "defaults write com.apple.screensaver askForPassword -int 1"
-    execute "defaults write com.apple.screensaver askForPasswordDelay -int 0"
-    
+
+    # Cannot be set from a script on macOS 13+ (sysadminctl needs the password,
+    # the defaults keys are inert), so detect the state and guide the user.
+    local status
+    status="$(user_screenlock_status 2>/dev/null)"
+
+    if echo "$status" | grep -qi "screenLock delay is immediate"; then
+        success "CIS 5.9 - A password is already required immediately after the screen saver"
+    else
+        warn "CIS 5.9 - Set Require password to Immediately in System Settings > Lock Screen. This cannot be set from a script on this macOS; the MDM profile can enforce it."
+    fi
 }
 
 # CIS 5.11 - Require an administrator password to access system-wide preferences
@@ -175,7 +186,7 @@ disable_fast_user_switching() {
 # CIS 5.16 - Secure individual keychains and items
 secure_keychains() {
     info "CIS 5.16 - Securing keychains"
-    
-    execute "security set-keychain-settings -t 21600 -l login.keychain"
-    
+
+    user_execute "security set-keychain-settings -t 21600 -l"
+
 }
