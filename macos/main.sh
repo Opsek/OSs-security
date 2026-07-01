@@ -34,6 +34,8 @@ FORCE_YES=false
 VERBOSE=false
 ENABLE_LOCKDOWN=false
 ENABLE_CHECKS=false
+CHECKS_ONLY=false
+SNAPSHOT_ONLY=false
 GENERATE_MDM=false
 MDM_PROFILE="recommended"
 MDM_OUTPUT_DIR="$SCRIPT_DIR/mdm_profiles"
@@ -61,26 +63,40 @@ run_cis_checks() {
     local total_issues=0
     
     # CIS compliance checks
-    cis_check_filevault || ((total_issues++))
-    cis_check_firewall || ((total_issues++))
-    cis_check_gatekeeper || ((total_issues++))
-    
-    local remote_issues
-    cis_check_remote_services
-    remote_issues=$?
+    cis_check_filevault || total_issues=$((total_issues+1))
+    cis_check_firewall || total_issues=$((total_issues+1))
+    cis_check_gatekeeper || total_issues=$((total_issues+1))
+    cis_check_software_updates || total_issues=$((total_issues+1))
+    cis_check_admin_required || total_issues=$((total_issues+1))
+    cis_check_file_extensions || total_issues=$((total_issues+1))
+
+    # Capture multi-issue counts with `|| var=$?` so a non-zero return (issues
+    # found) does not trip `set -e` and abort the audit mid-run.
+    local fw_issues=0
+    cis_check_firewall_hardening || fw_issues=$?
+    total_issues=$((total_issues + fw_issues))
+
+    local lock_issues=0
+    cis_check_lockscreen || lock_issues=$?
+    total_issues=$((total_issues + lock_issues))
+
+    local remote_issues=0
+    cis_check_remote_services || remote_issues=$?
     total_issues=$((total_issues + remote_issues))
-    
-    local user_issues
-    cis_check_user_settings
-    user_issues=$?
+
+    local user_issues=0
+    cis_check_user_settings || user_issues=$?
     total_issues=$((total_issues + user_issues))
     
+    # Aggregate summary line. Emitted as info, not success/warn, so the GUI
+    # parser does not count it as an extra passed/failed check on top of the
+    # individual cis_check_* results above.
     if [[ $total_issues -eq 0 ]]; then
-        success "All CIS compliance checks passed"
+        info "All CIS compliance checks passed"
     else
-        warn "$total_issues CIS compliance issues found"
+        info "$total_issues CIS compliance issues found"
     fi
-    
+
     return $total_issues
 }
 
@@ -92,27 +108,35 @@ run_opsek_checks() {
     
     # OPSEK specific checks
     if function_exists "opsek_check_bluetooth"; then
-        opsek_check_bluetooth || ((total_issues++))
+        opsek_check_bluetooth || total_issues=$((total_issues+1))
     fi
     
     if function_exists "opsek_check_wifi"; then
-        opsek_check_wifi || ((total_issues++))
+        opsek_check_wifi || total_issues=$((total_issues+1))
     fi
     
     if function_exists "opsek_check_lockdown_mode"; then
-        opsek_check_lockdown_mode || ((total_issues++))
+        opsek_check_lockdown_mode || total_issues=$((total_issues+1))
     fi
     
     if function_exists "opsek_check_keyboard_security"; then
-        opsek_check_keyboard_security || ((total_issues++))
+        opsek_check_keyboard_security || total_issues=$((total_issues+1))
     fi
-    
+
+    if function_exists "opsek_check_airdrop_handoff"; then
+        local airdrop_issues=0
+        opsek_check_airdrop_handoff || airdrop_issues=$?
+        total_issues=$((total_issues + airdrop_issues))
+    fi
+
+    # Aggregate summary line, emitted as info for the same reason as the CIS
+    # summary above (avoid double-counting in the GUI score).
     if [[ $total_issues -eq 0 ]]; then
-        success "All OPSEK compliance checks passed"
+        info "All OPSEK compliance checks passed"
     else
-        warn "$total_issues OPSEK compliance issues found"
+        info "$total_issues OPSEK compliance issues found"
     fi
-    
+
     return $total_issues
 }
 
@@ -125,6 +149,8 @@ while [[ ${#} -gt 0 ]]; do
         --paranoid) PROFILE="paranoid"; shift ;;
         --lockdown) ENABLE_LOCKDOWN=true; shift ;;
         --checks) ENABLE_CHECKS=true; shift ;;
+        --checks-only) CHECKS_ONLY=true; ENABLE_CHECKS=true; shift ;;
+        --snapshot-only) SNAPSHOT_ONLY=true; FORCE_YES=true; shift ;;
         --dry-run) DRY_RUN=true; shift ;;
         --yes) FORCE_YES=true; shift ;;
         --verbose) VERBOSE=true; shift ;;
@@ -201,70 +227,91 @@ main() {
     else
         info "Backup directory: $CURRENT_BACKUP"
     fi
-    
-    # Display warning and get confirmation if interactive
-    if [[ "$FORCE_YES" != true ]] && [[ "$DRY_RUN" != true ]]; then
-        echo
-        warn "WARNING: This script will modify system security settings."
-        warn "Profile: $PROFILE"
-        if [[ "$ENABLE_LOCKDOWN" == true ]]; then
-            warn "Lockdown Mode: ENABLED (may impact web browsing)"
+
+    # Standalone restore point: capture the current system state (so it can be
+    # rolled back to) without applying any hardening, then exit. Used by the GUI
+    # "Create snapshot" button so users can save a checkpoint on demand.
+    if [[ "$SNAPSHOT_ONLY" == true ]]; then
+        if [[ "$DRY_RUN" == false ]]; then
+            snapshot_system_state paranoid
+            generate_rollback_script "$CURRENT_BACKUP" "$TIMESTAMP"
+            write_snapshot_metadata "$CURRENT_BACKUP" "$TIMESTAMP"
+            success "Restore point saved in: $CURRENT_BACKUP"
+        else
+            info "Dry-run: no restore point created."
         fi
-        warn "A backup will be created at: $CURRENT_BACKUP"
-        echo
-        read -p "Continue with hardening? (y/N): " -n 1 -r
-        echo
-        [[ ! $REPLY =~ ^[Yy]$ ]] && { info "Hardening cancelled by user"; exit 0; }
-    fi
-    
-    # Validate profile
-    if ! validate_profile "$PROFILE"; then
-        error "Profile validation failed"
-        exit 1
-    fi
-    
-    # Apply selected profile
-    echo
-    if ! apply_profile "$PROFILE"; then
-        error "Failed to apply profile: $PROFILE"
-        exit 1
+        exit 0
     fi
 
-    # Apply optional Lockdown-compatible restrictions when explicitly requested.
-    if [[ "$ENABLE_LOCKDOWN" == true ]]; then
-        echo
-        if function_exists "enable_lockdown_mode"; then
-            if ! enable_lockdown_mode; then
-                warn "Lockdown Mode compatible settings were not fully applied"
+    # Apply the hardening profile, unless we were asked to only run the
+    # read-only compliance checks. --checks-only is used by the GUI audit so
+    # the score reflects the real system state and is not mixed with a profile
+    # dry-run that would otherwise be applied here first.
+    if [[ "$CHECKS_ONLY" != true ]]; then
+        # Display warning and get confirmation if interactive
+        if [[ "$FORCE_YES" != true ]] && [[ "$DRY_RUN" != true ]]; then
+            echo
+            warn "WARNING: This script will modify system security settings."
+            warn "Profile: $PROFILE"
+            if [[ "$ENABLE_LOCKDOWN" == true ]]; then
+                warn "Lockdown Mode: ENABLED (may impact web browsing)"
             fi
-        else
-            error "Lockdown Mode module is not available"
+            warn "A backup will be created at: $CURRENT_BACKUP"
+            echo
+            read -p "Continue with hardening? (y/N): " -n 1 -r
+            echo
+            [[ ! $REPLY =~ ^[Yy]$ ]] && { info "Hardening cancelled by user"; exit 0; }
+        fi
+
+        # Validate profile
+        if ! validate_profile "$PROFILE"; then
+            error "Profile validation failed"
             exit 1
         fi
+
+        # Apply selected profile
+        echo
+        if ! apply_profile "$PROFILE"; then
+            error "Failed to apply profile: $PROFILE"
+            exit 1
+        fi
+
+        # Create rollback script if not dry-run
+        if [[ "$DRY_RUN" == false ]]; then
+            generate_rollback_script "$CURRENT_BACKUP" "$TIMESTAMP"
+            write_snapshot_metadata "$CURRENT_BACKUP" "$TIMESTAMP"
+            success "Hardening applied and backup stored in: $CURRENT_BACKUP"
+        else
+            info "Dry-run finished. No changes were applied."
+        fi
     fi
-    
-    # Create rollback script if not dry-run
-    if [[ "$DRY_RUN" == false ]]; then
-        generate_rollback_script "$CURRENT_BACKUP" "$TIMESTAMP"
-        success "Hardening applied and backup stored in: $CURRENT_BACKUP"
-    else
-        info "Dry-run finished. No changes were applied."
-    fi
-    
+
     # Run compliance checks if requested
     local compliance_issues=0
-    
+
     if [[ "$ENABLE_CHECKS" == true ]]; then
         echo
-        run_cis_checks
-        compliance_issues=$?
+        # Capture each with `|| var=$?`: the functions return the issue count,
+        # and a bare non-zero return would trip set -e and abort main() before
+        # run_opsek_checks ran.
+        # Markers so a combined apply+checks run (GUI Apply uses --checks) can
+        # isolate the check rows from the apply log noise when parsing the score.
+        echo "OPSEK_CHECKS_BEGIN"
+        local cis_issues=0
+        run_cis_checks || cis_issues=$?
 
         echo
-        local opsek_issues
-        run_opsek_checks
-        opsek_issues=$?
-        compliance_issues=$((compliance_issues + opsek_issues))
-        show_summary "$PROFILE" "$compliance_issues"
+        local opsek_issues=0
+        run_opsek_checks || opsek_issues=$?
+        echo "OPSEK_CHECKS_END"
+
+        compliance_issues=$((cis_issues + opsek_issues))
+
+        # The hardening summary banner only makes sense when a profile was
+        # actually applied. In checks-only mode the checks are the output.
+        if [[ "$CHECKS_ONLY" != true ]]; then
+            show_summary "$PROFILE" "$compliance_issues"
+        fi
     fi
 
 }
