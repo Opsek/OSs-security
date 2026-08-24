@@ -19,18 +19,11 @@ Always be cautious with the software you install and the commands you execute.
 
 ## 🛡️ Security audits
 
-This project has been independently audited by **two** security firms:
-
-| Auditor | Report |
-|---|---|
-| [**Sigma Prime**](https://sigmaprime.io/) | 📄 [View report (PDF)](./audit-report-hardening-scripts.pdf) |
-
+[**Sigma Prime**](https://sigmaprime.io/) 📄 [View report (PDF)](./audit-report-hardening-scripts.pdf)
 
 ### Sigma Prime report preview
 
 [![Sigma Prime Audit Report Preview](./audit-report-preview.png)](./audit-report-hardening-scripts.pdf)
-
-*Click the image to view the full Sigma Prime audit report.*
 
 ---
 
